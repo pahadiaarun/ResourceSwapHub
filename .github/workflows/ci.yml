@@ -1,0 +1,83 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  backend:
+    name: Backend tests (Java 21 + PostgreSQL)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: "ResourceSwapHub Backend"
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_DB: bookbridge
+          POSTGRES_USER: bookbridge
+          POSTGRES_PASSWORD: bookbridge_dev
+        ports:
+          - 55432:5432
+        options: >-
+          --health-cmd "pg_isready -U bookbridge"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 10
+    env:
+      # CI services create a single database, so point the test profile at it.
+      BOOKBRIDGE_TEST_DB_URL: jdbc:postgresql://127.0.0.1:55432/bookbridge
+      BOOKBRIDGE_TEST_JWT_SECRET: test-only-secret-that-is-long-enough-for-hs256-signing-0123456789
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+          cache: maven
+
+      - name: Run test suite (Flyway migrates bookbridge_test)
+        run: ./mvnw -B test
+
+  frontend:
+    name: Frontend typecheck, lint and production build
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: "ResourceSwapHub FrontEnd"
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: "ResourceSwapHub FrontEnd/package-lock.json"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Production build (includes typecheck)
+        run: npm run build
+
+  docker:
+    name: Docker images build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build API image
+        run: docker build -f "ResourceSwapHub Backend/Dockerfile" "ResourceSwapHub Backend"
+
+      - name: Build web image
+        run: docker build -f "ResourceSwapHub FrontEnd/Dockerfile" "ResourceSwapHub FrontEnd"
