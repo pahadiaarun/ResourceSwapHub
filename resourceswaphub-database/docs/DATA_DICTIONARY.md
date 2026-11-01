@@ -13,8 +13,9 @@ rules) and database constraints (last line of defence).
 | `users.google_subject` | Google account `sub` claim | Unique when present; stable across email changes |
 | `users.display_name` | Public name | 2–80 chars, trimmed, non-blank |
 | `users.avatar_url` | Profile photo | URL or `/api/v1/media/{id}`; remote Google photo allowed |
-| `users.city` | City used for discovery | ≤ 80 chars; required together with locality to complete a profile |
+| `users.city` | City used for discovery | ≤ 80 chars; mirrored directory spelling once standardized; required together with locality to complete a profile |
 | `users.locality` | Neighbourhood | ≤ 120 chars |
+| `users.country_id` / `state_id` / `city_id` | Standardized location | FK into the directory; set only through `LocationService.resolve`, nullable while a typed value has no unambiguous match |
 | `refresh_tokens.token_hash` | SHA-256 of the opaque refresh token | Raw token never stored; unique; 64 hex chars |
 | `refresh_tokens.revoked_at` | Rotation/logout marker | Null while active |
 | `media_assets.purpose` | Upload intent | `LISTING` (max 5 per listing) or `AVATAR` |
@@ -46,13 +47,14 @@ case-insensitively and with spaces or hyphens (for example `state board`).
 | --- | --- | --- |
 | `collections.title` | Collection name | Required, 2–120 chars |
 | `collections.description` | Free text | ≤ 1000 chars |
-| `collections.city` / `locality` | Pickup area | City required |
+| `collections.city` / `locality` | Pickup area | City required; `collections.country_id` / `state_id` / `city_id` hold the standardized location |
 | `listings.book_id` | Catalogue edition | Must exist |
 | `listings.collection_id` | Optional grouping | Must belong to the same owner |
 | `listings.condition` | Physical condition | `NEW`, `LIKE_NEW`, `GOOD`, `FAIR`, `POOR` |
 | `listings.price_type` | Commercial model | `FREE`, `FIXED_PRICE`, `NEGOTIABLE` |
 | `listings.price` | Asking price in INR | Free → null; fixed → required and > 0; negotiable → null or > 0 |
-| `listings.city` | Pickup city | Required, ≤ 80 chars |
+| `listings.city` | Pickup city | ≤ 80 chars; falls back to the seller's profile city, mirrored from the directory when standardized |
+| `listings.country_id` / `state_id` / `city_id` | Standardized pickup location | Must be consistent with each other — a city from another state is `400 CITY_STATE_MISMATCH` |
 | `listings.locality` | Pickup locality | Optional, ≤ 120 chars |
 | `listings.notes` | Seller notes | Optional, ≤ 2000 chars |
 | `listings.status` | Availability | `AVAILABLE`, `UNAVAILABLE`, `WITHDRAWN`, `EXCHANGED` |
@@ -67,6 +69,29 @@ UNAVAILABLE → AVAILABLE   | WITHDRAWN | EXCHANGED
 WITHDRAWN   → AVAILABLE   | UNAVAILABLE
 EXCHANGED   → (terminal)
 ```
+
+## Location directory
+
+Fields of `countries`, `states`, `districts`, `cities` and `location_aliases`. Full design notes:
+[LOCATION_SCHEMA.md](LOCATION_SCHEMA.md).
+
+| Field | Meaning | Rules |
+| --- | --- | --- |
+| `*.iso_code` / `official_code` | Publisher identifier | ISO 3166-1 / ISO 3166-2:IN / LGD / Census, unique when present; **NULL whenever no real code is known** — never invented |
+| `*.name` | Display spelling | As published by the source |
+| `*.normalized_name` | Search and identity key | Lower-cased, accents folded, everything outside `[a-z0-9\s]` removed, spaces collapsed |
+| `states.state_type` | Constitutional kind | `STATE` or `UNION_TERRITORY` (CHECK) |
+| `cities.city_type` | Settlement kind | `METROPOLITAN_CITY`, `CITY`, `TOWN`, `CENSUS_TOWN`, `VILLAGE`, `NOTIFICATION_AREA`, `OTHER`, or null |
+| `districts.state_id`, `cities.state_id` | Parent scope | Required FK; uniqueness is always `(parent_id, normalized_name)`, so a name is never an identifier on its own |
+| `cities.district_id` | Optional parent | Null when the source does not map a settlement to a district |
+| `*.is_active` | Visibility | Inactive rows are excluded from every select and rejected by `require*` |
+| `*.source` / `source_url` / `dataset_version` | Provenance | Which dataset the row came from, so a later refresh can be attributed |
+| `location_aliases.entity_type` + `entity_id` | What an alias points at | `COUNTRY`/`STATE`/`DISTRICT`/`CITY`; unique per `(entity_type, entity_id, normalized_alias)` |
+
+Accepted values on the write side: `countryId`, `stateId`, `cityId` must be existing active
+directory ids (`400 INVALID_COUNTRY` / `INVALID_STATE` / `INVALID_CITY` otherwise). Typed city text
+is accepted for compatibility and standardized only when it maps to exactly one row — an ambiguous
+name keeps the text and stores no id.
 
 ## Communication
 
@@ -94,3 +119,5 @@ The API returns both raw enum values (`priceType`) and human labels
 - Google access tokens; only the verified subject, email, name and picture URL
   are persisted.
 - Uploaded file contents inside PostgreSQL; only metadata is stored.
+- Residential addresses or precise coordinates. A location is at city level and, publicly, only
+  city plus state are ever shown.

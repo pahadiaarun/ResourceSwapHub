@@ -10,9 +10,11 @@ import org.springframework.core.io.ClassPathResource;
 import org.springframework.stereotype.Component;
 
 /**
- * Seeds the curated starter directory (districts and cities) on first boot so the cascading
- * selects are usable out of the box. Idempotent: it only runs while the cities table is empty,
- * and the importer itself upserts by (state, normalized name).
+ * Seeds the curated starter directory (districts and cities) on boot so the cascading selects are
+ * usable out of the box, and tops the directory up on later boots when the seed file grows.
+ * Idempotent: the importer upserts by (state, normalized name), and the curated run uses
+ * insert-missing-only semantics — rows already stored are never rewritten, so names, official
+ * codes and provenance from an authorized LGD/Census import are preserved.
  *
  * <p>Seeded rows carry {@code source = CURATED_SEED} and no {@code official_code}: well-known
  * settlement names are recorded, government identifiers never are. Authoritative bulk data —
@@ -40,10 +42,6 @@ public class LocationSeedRunner implements CommandLineRunner {
     public void run(String... args) {
         try {
             long existing = cityRepository.count();
-            if (existing > 0) {
-                log.debug("Location seed skipped: {} cities already present", existing);
-                return;
-            }
             ClassPathResource resource = new ClassPathResource(SEED_RESOURCE);
             if (!resource.exists()) {
                 log.warn("Location seed skipped: resource '{}' not found", SEED_RESOURCE);
@@ -51,9 +49,11 @@ public class LocationSeedRunner implements CommandLineRunner {
             }
             try (InputStream in = resource.getInputStream()) {
                 LocationImportSummary summary = importService.importJson(in, LocationImportOptions.curatedSeed());
-                log.info("Seeded locations: states={} districts={} cities={} inserted={} failed={}",
+                log.info("Location seed top-up ({}, {} cities present before): states={} districts={} cities={} "
+                                + "inserted={} skipped={} failed={}",
+                        existing == 0 ? "first boot" : "existing directory", existing,
                         summary.states(), summary.districts(), summary.cities(),
-                        summary.inserted(), summary.failed());
+                        summary.inserted(), summary.skipped(), summary.failed());
             }
         } catch (RuntimeException | java.io.IOException ex) {
             log.error("Location seeding failed (startup continues): {}", ex.getMessage(), ex);

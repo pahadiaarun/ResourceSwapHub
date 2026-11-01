@@ -163,6 +163,17 @@ public class LocationImportService {
             return state;
         }
         boolean isNew = state == null;
+        if (!isNew && options.insertMissingOnly()) {
+            // Top-up run: an existing state row is left untouched — name, code and provenance
+            // included — but any children the file adds that are missing are still seeded.
+            for (RawDistrict rawDistrict : raw.districts()) {
+                importDistrict(state, rawDistrict, options, counters);
+            }
+            for (RawCity rawCity : raw.cities()) {
+                importCity(state, null, rawCity, options, counters);
+            }
+            return state;
+        }
         if (isNew) state = new State();
         state.setCountryId(country.getId());
         state.setName(raw.name().trim());
@@ -204,6 +215,13 @@ public class LocationImportService {
             return;
         }
         boolean isNew = district == null;
+        if (!isNew && options.insertMissingOnly()) {
+            // Top-up run: keep the stored district untouched, but still seed missing cities under it.
+            for (RawCity rawCity : raw.cities()) {
+                importCity(state, district, rawCity, options, counters);
+            }
+            return;
+        }
         if (isNew) district = new District();
         district.setStateId(state.getId());
         district.setName(raw.name().trim());
@@ -242,6 +260,11 @@ public class LocationImportService {
             return;
         }
         boolean isNew = city == null;
+        if (!isNew && options.insertMissingOnly()) {
+            // Top-up run: the city already exists in the directory, so nothing is changed.
+            counters.skipped++;
+            return;
+        }
         if (isNew) city = new City();
         city.setStateId(state.getId());
         // A district is attached only when the file names one; an existing link is never dropped.

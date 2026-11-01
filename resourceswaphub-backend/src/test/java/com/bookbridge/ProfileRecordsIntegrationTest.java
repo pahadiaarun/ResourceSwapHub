@@ -140,13 +140,15 @@ class ProfileRecordsIntegrationTest extends ApiIntegrationTest {
         assertThat(mine.path("bio").asString()).isEqualTo("A private bio");
         assertThat(mine.path("email").asString()).contains("@");
 
-        // Another user only ever gets the minimal public card.
+        // Another user only ever gets the minimal public card. Withheld fields are omitted by the
+        // serializer's non_null setting, so presence itself is the thing under test.
         JsonNode theirs = api.get("/api/v1/profile/" + owner.id(), other.token()).data();
         assertThat(theirs.path("id").asString()).isEqualTo(owner.id().toString());
         assertThat(theirs.path("name").asString()).isNotBlank();
-        assertThat(theirs.path("email").isNull()).as("email never exposed").isTrue();
-        assertThat(theirs.path("bio").isNull()).as("bio never exposed").isTrue();
-        assertThat(theirs.path("state").isNull()).as("state never exposed").isTrue();
+        assertThat(theirs.has("email")).as("email never exposed").isFalse();
+        assertThat(theirs.has("bio")).as("bio never exposed").isFalse();
+        assertThat(theirs.has("state")).as("state never exposed").isFalse();
+        assertThat(theirs.has("location")).as("location never exposed").isFalse();
     }
 
     @Test

@@ -150,17 +150,6 @@ public class LocationService {
                 .orElseThrow(() -> ApiException.badRequest("INVALID_DISTRICT", "Unknown or inactive districtId"));
     }
 
-    /** Resolves a city only when it belongs to the given state; a name alone is never enough. */
-    @Transactional(readOnly = true)
-    public City requireCityInState(UUID cityId, UUID stateId) {
-        City city = requireCity(cityId);
-        State state = requireState(stateId);
-        if (!city.getStateId().equals(state.getId())) {
-            throw ApiException.badRequest("CITY_STATE_MISMATCH", "cityId does not belong to stateId");
-        }
-        return city;
-    }
-
     /**
      * Maps free-text to a canonical state: exact normalized name first, then a recorded alias,
      * then a unique substring match. Returns empty on anything ambiguous so the caller never

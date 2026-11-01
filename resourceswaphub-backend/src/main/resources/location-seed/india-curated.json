@@ -1,505 +1,904 @@
 {
   "countryIsoCode": "IN",
-  "_comment": "Curated starter set, NOT an authoritative gazetteer. Names are well-known settlements only; official_code is deliberately absent everywhere because we never invent government identifiers. District links are recorded only where the settlement-to-district relationship is stable and widely documented; the rest are attached to the state with a null district. Replace or extend this through the documented LGD / Census import pipeline (docs/LOCATION_DATA_SOURCES.md).",
+  "_comment": "Curated starter set, NOT an authoritative gazetteer. Names are well-known settlements only; official_code is deliberately absent everywhere because we never invent government identifiers. District links are recorded only where the settlement-to-district relationship is stable and widely documented; the rest are attached to the state with a null district. Extend this file freely: the boot-time seed run is an idempotent top-up (existing rows are never rewritten), so bigger lists reach already-deployed databases safely. For full authoritative coverage use the documented LGD / Census import pipeline (docs/LOCATION_DATA_SOURCES.md).",
   "states": [
     {
-      "code": "IN-AN",
-      "name": "Andaman and Nicobar Islands",
-      "type": "UNION_TERRITORY",
-      "cities": [
-        { "name": "Port Blair", "aliases": ["Sri Vijaya Purvaka"] }
-      ]
+    "code": "IN-AN",
+    "name": "Andaman and Nicobar Islands",
+    "type": "UNION_TERRITORY",
+    "cities": [
+      { "name": "Port Blair", "aliases": ["Sri Vijaya Purvaka"] }
+    ]
     },
     {
-      "code": "IN-AP",
-      "name": "Andhra Pradesh",
-      "type": "STATE",
-      "cities": [
-        { "name": "Visakhapatnam", "aliases": ["Vizag"] },
-        { "name": "Vijayawada" },
-        { "name": "Tirupati" },
-        { "name": "Guntur" },
-        { "name": "Nellore", "aliases": ["Sri Potti Sriramulu Nellore"] },
-        { "name": "Rajahmundry", "aliases": ["Rajamahendravaram"] },
-        { "name": "Kurnool" },
-        { "name": "Anantapur" }
-      ]
+    "code": "IN-AP",
+    "name": "Andhra Pradesh",
+    "type": "STATE",
+    "cities": [
+      { "name": "Visakhapatnam", "aliases": ["Vizag"] },
+      { "name": "Vijayawada" },
+      { "name": "Tirupati" },
+      { "name": "Guntur" },
+      { "name": "Nellore", "aliases": ["Sri Potti Sriramulu Nellore"] },
+      { "name": "Rajahmundry", "aliases": ["Rajamahendravaram"] },
+      { "name": "Kurnool" },
+      { "name": "Anantapur" },
+      { "name": "Kakinada" },
+      { "name": "Bhimavaram" },
+      { "name": "Eluru" },
+      { "name": "Ongole" },
+      { "name": "Srikakulam" },
+      { "name": "Vizianagaram" },
+      { "name": "Machilipatnam", "aliases": ["Masulipatnam"] },
+      { "name": "Tenali" },
+      { "name": "Chittoor" },
+      { "name": "Kadapa", "aliases": ["Cuddapah"] },
+      { "name": "Nandyal" },
+      { "name": "Proddatur" },
+      { "name": "Hindupur" },
+      { "name": "Adoni" },
+      { "name": "Guntakal" },
+      { "name": "Tadepalligudem" },
+      { "name": "Gudivada" },
+      { "name": "Dharmavaram" },
+      { "name": "Palakollu" },
+      { "name": "Amalapuram" }
+    ]
     },
     {
-      "code": "IN-AR",
-      "name": "Arunachal Pradesh",
-      "type": "STATE",
-      "cities": [
-        { "name": "Itanagar" },
-        { "name": "Naharlagun" },
-        { "name": "Tawang" },
-        { "name": "Roing" }
-      ]
+    "code": "IN-AR",
+    "name": "Arunachal Pradesh",
+    "type": "STATE",
+    "cities": [
+      { "name": "Itanagar" },
+      { "name": "Naharlagun" },
+      { "name": "Tawang" },
+      { "name": "Roing" },
+      { "name": "Pasighat" },
+      { "name": "Ziro" },
+      { "name": "Bomdila" },
+      { "name": "Aalo", "aliases": ["Along"] },
+      { "name": "Khonsa" },
+      { "name": "Changlang" },
+      { "name": "Daporijo" },
+      { "name": "Namsai" },
+      { "name": "Yingkiong" }
+    ]
     },
     {
-      "code": "IN-AS",
-      "name": "Assam",
-      "type": "STATE",
-      "cities": [
-        { "name": "Guwahati", "aliases": ["Gauhati"] },
-        { "name": "Silchar" },
-        { "name": "Dibrugarh" },
-        { "name": "Jorhat" },
-        { "name": "Tezpur" },
-        { "name": "Nagaon" }
-      ]
+    "code": "IN-AS",
+    "name": "Assam",
+    "type": "STATE",
+    "cities": [
+      { "name": "Guwahati", "aliases": ["Gauhati"] },
+      { "name": "Silchar" },
+      { "name": "Dibrugarh" },
+      { "name": "Jorhat" },
+      { "name": "Tezpur" },
+      { "name": "Nagaon" },
+      { "name": "Tinsukia" },
+      { "name": "Bongaigaon" },
+      { "name": "Diphu" },
+      { "name": "Dhubri" },
+      { "name": "Goalpara" },
+      { "name": "Karimganj" },
+      { "name": "Sivasagar", "aliases": ["Sibsagar"] },
+      { "name": "Golaghat" },
+      { "name": "Barpeta" },
+      { "name": "Nalbari" },
+      { "name": "Hailakandi" },
+      { "name": "Dhemaji" },
+      { "name": "Morigaon" }
+    ]
     },
     {
-      "code": "IN-BR",
-      "name": "Bihar",
-      "type": "STATE",
-      "cities": [
-        { "name": "Patna", "aliases": ["Pataliputra"] },
-        { "name": "Gaya" },
-        { "name": "Muzaffarpur" },
-        { "name": "Bhagalpur" },
-        { "name": "Purnia" },
-        { "name": "Darbhanga" },
-        { "name": "Bihar Sharif" }
-      ]
+    "code": "IN-BR",
+    "name": "Bihar",
+    "type": "STATE",
+    "cities": [
+      { "name": "Patna", "aliases": ["Pataliputra"] },
+      { "name": "Gaya" },
+      { "name": "Muzaffarpur" },
+      { "name": "Bhagalpur" },
+      { "name": "Purnia" },
+      { "name": "Darbhanga" },
+      { "name": "Bihar Sharif" },
+      { "name": "Arrah", "aliases": ["Ara"] },
+      { "name": "Sasaram" },
+      { "name": "Begusarai" },
+      { "name": "Katihar" },
+      { "name": "Munger" },
+      { "name": "Danapur" },
+      { "name": "Dehri", "aliases": ["Dehri-on-Sone"] },
+      { "name": "Siwan" },
+      { "name": "Motihari" },
+      { "name": "Nawada" },
+      { "name": "Buxar" },
+      { "name": "Kishanganj" },
+      { "name": "Samastipur" },
+      { "name": "Chhapra" },
+      { "name": "Hajipur" },
+      { "name": "Saharsa" },
+      { "name": "Sitamarhi" },
+      { "name": "Aurangabad" },
+      { "name": "Gopalganj" }
+    ]
     },
     {
-      "code": "IN-CH",
-      "name": "Chandigarh",
-      "type": "UNION_TERRITORY",
-      "cities": [
-        { "name": "Chandigarh" }
-      ]
+    "code": "IN-CH",
+    "name": "Chandigarh",
+    "type": "UNION_TERRITORY",
+    "cities": [
+      { "name": "Chandigarh" }
+    ]
     },
     {
-      "code": "IN-CT",
-      "name": "Chhattisgarh",
-      "type": "STATE",
-      "cities": [
-        { "name": "Raipur" },
-        { "name": "Bilaspur" },
-        { "name": "Durg" },
-        { "name": "Bhilai" },
-        { "name": "Jagdalpur" },
-        { "name": "Korba" }
-      ]
+    "code": "IN-CT",
+    "name": "Chhattisgarh",
+    "type": "STATE",
+    "cities": [
+      { "name": "Raipur" },
+      { "name": "Bilaspur" },
+      { "name": "Durg" },
+      { "name": "Bhilai" },
+      { "name": "Jagdalpur" },
+      { "name": "Korba" },
+      { "name": "Raigarh" },
+      { "name": "Rajnandgaon" },
+      { "name": "Ambikapur" },
+      { "name": "Dhamtari" },
+      { "name": "Mahasamund" },
+      { "name": "Kanker" },
+      { "name": "Kondagaon" },
+      { "name": "Champa", "aliases": ["Janjgir-Champa"] },
+      { "name": "Mungeli" }
+    ]
     },
     {
-      "code": "IN-DH",
-      "name": "Dadra and Nagar Haveli and Daman and Diu",
-      "type": "UNION_TERRITORY",
-      "cities": [
-        { "name": "Daman" },
-        { "name": "Silvassa" },
-        { "name": "Diu" }
-      ]
+    "code": "IN-DH",
+    "name": "Dadra and Nagar Haveli and Daman and Diu",
+    "type": "UNION_TERRITORY",
+    "cities": [
+      { "name": "Daman" },
+      { "name": "Silvassa" },
+      { "name": "Diu" },
+      { "name": "Amli" }
+    ]
     },
     {
-      "code": "IN-DL",
-      "name": "Delhi",
-      "type": "UNION_TERRITORY",
-      "districts": [
-        { "name": "New Delhi", "cities": [{ "name": "New Delhi" }] }
-      ],
-      "cities": [
-        { "name": "Delhi", "aliases": ["Old Delhi", "Dilli"] },
-        { "name": "Dwarka" },
-        { "name": "Rohini" },
-        { "name": "Saket" }
-      ]
+    "code": "IN-DL",
+    "name": "Delhi",
+    "type": "UNION_TERRITORY",
+    "districts": [
+      { "name": "New Delhi", "cities": [{ "name": "New Delhi" }] }
+    ],
+    "cities": [
+      { "name": "Delhi", "aliases": ["Old Delhi", "Dilli"] },
+      { "name": "Dwarka" },
+      { "name": "Rohini" },
+      { "name": "Saket" },
+      { "name": "Narela" },
+      { "name": "Najafgarh" }
+    ]
     },
     {
-      "code": "IN-GA",
-      "name": "Goa",
-      "type": "STATE",
-      "cities": [
-        { "name": "Panaji", "aliases": ["Panjim"] },
-        { "name": "Margao" },
-        { "name": "Vasco Da Gama" },
-        { "name": "Mapusa" }
-      ]
+    "code": "IN-GA",
+    "name": "Goa",
+    "type": "STATE",
+    "cities": [
+      { "name": "Panaji", "aliases": ["Panjim"] },
+      { "name": "Margao" },
+      { "name": "Vasco Da Gama" },
+      { "name": "Mapusa" },
+      { "name": "Ponda" },
+      { "name": "Pernem" },
+      { "name": "Quepem" },
+      { "name": "Curchorem" },
+      { "name": "Sanguem" },
+      { "name": "Canacona" }
+    ]
     },
     {
-      "code": "IN-GJ",
-      "name": "Gujarat",
-      "type": "STATE",
-      "districts": [
-        { "name": "Ahmedabad", "cities": [{ "name": "Ahmedabad", "aliases": ["Amdavad"] }] },
-        { "name": "Surat", "cities": [{ "name": "Surat" }] }
-      ],
-      "cities": [
-        { "name": "Vadodara", "aliases": ["Baroda"] },
-        { "name": "Rajkot" },
-        { "name": "Gandhinagar" },
-        { "name": "Bhavnagar" },
-        { "name": "Jamnagar" },
-        { "name": "Junagadh" },
-        { "name": "Gandhidham" },
-        { "name": "Nadiad" }
-      ]
+    "code": "IN-GJ",
+    "name": "Gujarat",
+    "type": "STATE",
+    "districts": [
+      { "name": "Ahmedabad", "cities": [{ "name": "Ahmedabad", "aliases": ["Amdavad"] }] },
+      { "name": "Surat", "cities": [{ "name": "Surat" }] }
+    ],
+    "cities": [
+      { "name": "Vadodara", "aliases": ["Baroda"] },
+      { "name": "Rajkot" },
+      { "name": "Gandhinagar" },
+      { "name": "Bhavnagar" },
+      { "name": "Jamnagar" },
+      { "name": "Junagadh" },
+      { "name": "Gandhidham" },
+      { "name": "Nadiad" },
+      { "name": "Anand" },
+      { "name": "Morbi" },
+      { "name": "Bharuch" },
+      { "name": "Valsad" },
+      { "name": "Navsari" },
+      { "name": "Mehsana" },
+      { "name": "Palanpur" },
+      { "name": "Bhuj" },
+      { "name": "Porbandar" },
+      { "name": "Veraval" },
+      { "name": "Surendranagar", "aliases": ["Surendranagar-Dudhrej"] },
+      { "name": "Amreli" },
+      { "name": "Botad" },
+      { "name": "Anjar" },
+      { "name": "Ankleshwar" }
+    ]
     },
     {
-      "code": "IN-HR",
-      "name": "Haryana",
-      "type": "STATE",
-      "cities": [
-        { "name": "Gurugram", "aliases": ["Gurgaon"] },
-        { "name": "Faridabad" },
-        { "name": "Panipat" },
-        { "name": "Ambala" },
-        { "name": "Hisar" },
-        { "name": "Rohtak" },
-        { "name": "Sonipat" },
-        { "name": "Karnal" }
-      ]
+    "code": "IN-HR",
+    "name": "Haryana",
+    "type": "STATE",
+    "cities": [
+      { "name": "Gurugram", "aliases": ["Gurgaon"] },
+      { "name": "Faridabad" },
+      { "name": "Panipat" },
+      { "name": "Ambala" },
+      { "name": "Hisar" },
+      { "name": "Rohtak" },
+      { "name": "Sonipat" },
+      { "name": "Karnal" },
+      { "name": "Jind" },
+      { "name": "Rewari" },
+      { "name": "Bhiwani" },
+      { "name": "Sirsa" },
+      { "name": "Palwal" },
+      { "name": "Yamunanagar" },
+      { "name": "Kurukshetra", "aliases": ["Thanesar"] },
+      { "name": "Kaithal" },
+      { "name": "Bahadurgarh" },
+      { "name": "Fatehabad" },
+      { "name": "Narnaul" },
+      { "name": "Jhajjar" }
+    ]
     },
     {
-      "code": "IN-HP",
-      "name": "Himachal Pradesh",
-      "type": "STATE",
-      "cities": [
-        { "name": "Shimla", "aliases": ["Simla"] },
-        { "name": "Solan" },
-        { "name": "Dharamsala", "aliases": ["Dharamshala"] },
-        { "name": "Manali" },
-        { "name": "Mandi" },
-        { "name": "Hamirpur" }
-      ]
+    "code": "IN-HP",
+    "name": "Himachal Pradesh",
+    "type": "STATE",
+    "cities": [
+      { "name": "Shimla", "aliases": ["Simla"] },
+      { "name": "Solan" },
+      { "name": "Dharamsala", "aliases": ["Dharamshala"] },
+      { "name": "Manali" },
+      { "name": "Mandi" },
+      { "name": "Hamirpur" },
+      { "name": "Kullu" },
+      { "name": "Bilaspur" },
+      { "name": "Una" },
+      { "name": "Chamba" },
+      { "name": "Palampur" },
+      { "name": "Kangra" },
+      { "name": "Nahan" },
+      { "name": "Paonta Sahib" },
+      { "name": "Baddi" },
+      { "name": "Dalhousie" },
+      { "name": "Kasauli" }
+    ]
     },
     {
-      "code": "IN-JK",
-      "name": "Jammu and Kashmir",
-      "type": "UNION_TERRITORY",
-      "cities": [
-        { "name": "Srinagar" },
-        { "name": "Jammu" },
-        { "name": "Anantnag" },
-        { "name": "Baramulla" },
-        { "name": "Udhampur" }
-      ]
+    "code": "IN-JK",
+    "name": "Jammu and Kashmir",
+    "type": "UNION_TERRITORY",
+    "cities": [
+      { "name": "Srinagar" },
+      { "name": "Jammu" },
+      { "name": "Anantnag" },
+      { "name": "Baramulla" },
+      { "name": "Udhampur" },
+      { "name": "Pulwama" },
+      { "name": "Kathua" },
+      { "name": "Katra" },
+      { "name": "Sopore" },
+      { "name": "Doda" },
+      { "name": "Kupwara" },
+      { "name": "Budgam" },
+      { "name": "Ganderbal" },
+      { "name": "Poonch" },
+      { "name": "Rajouri" },
+      { "name": "Samba" },
+      { "name": "Reasi" }
+    ]
     },
     {
-      "code": "IN-JH",
-      "name": "Jharkhand",
-      "type": "STATE",
-      "cities": [
-        { "name": "Ranchi" },
-        { "name": "Jamshedpur" },
-        { "name": "Dhanbad" },
-        { "name": "Bokaro Steel City" },
-        { "name": "Deoghar" },
-        { "name": "Giridih" }
-      ]
+    "code": "IN-JH",
+    "name": "Jharkhand",
+    "type": "STATE",
+    "cities": [
+      { "name": "Ranchi" },
+      { "name": "Jamshedpur" },
+      { "name": "Dhanbad" },
+      { "name": "Bokaro Steel City" },
+      { "name": "Deoghar" },
+      { "name": "Giridih" },
+      { "name": "Hazaribagh" },
+      { "name": "Ramgarh" },
+      { "name": "Daltonganj" },
+      { "name": "Chaibasa" },
+      { "name": "Dumka" },
+      { "name": "Sahibganj" },
+      { "name": "Godda" },
+      { "name": "Koderma" },
+      { "name": "Jhumri Telaiya" },
+      { "name": "Phusro" },
+      { "name": "Chatra" },
+      { "name": "Garhwa" }
+    ]
     },
     {
-      "code": "IN-KA",
-      "name": "Karnataka",
-      "type": "STATE",
-      "districts": [
-        { "name": "Bengaluru Urban", "cities": [{ "name": "Bengaluru", "aliases": ["Bangalore"] }] }
-      ],
-      "cities": [
-        { "name": "Mysuru", "aliases": ["Mysore"] },
-        { "name": "Mangaluru", "aliases": ["Mangalore"] },
-        { "name": "Hubballi", "aliases": ["Hubli", "Dharwad"] },
-        { "name": "Belagavi", "aliases": ["Belgaum"] },
-        { "name": "Kalaburagi", "aliases": ["Gulbarga"] },
-        { "name": "Ballari", "aliases": ["Bellary"] },
-        { "name": "Shivamogga", "aliases": ["Shimoga"] },
-        { "name": "Tumakuru", "aliases": ["Tumkur"] },
-        { "name": "Davanagere" },
-        { "name": "Hassan" }
-      ]
+    "code": "IN-KA",
+    "name": "Karnataka",
+    "type": "STATE",
+    "districts": [
+      { "name": "Bengaluru Urban", "cities": [{ "name": "Bengaluru", "aliases": ["Bangalore"] }] }
+    ],
+    "cities": [
+      { "name": "Mysuru", "aliases": ["Mysore"] },
+      { "name": "Mangaluru", "aliases": ["Mangalore"] },
+      { "name": "Hubballi", "aliases": ["Hubli", "Dharwad"] },
+      { "name": "Belagavi", "aliases": ["Belgaum"] },
+      { "name": "Kalaburagi", "aliases": ["Gulbarga"] },
+      { "name": "Ballari", "aliases": ["Bellary"] },
+      { "name": "Shivamogga", "aliases": ["Shimoga"] },
+      { "name": "Tumakuru", "aliases": ["Tumkur"] },
+      { "name": "Davanagere" },
+      { "name": "Hassan" },
+      { "name": "Dharwad" },
+      { "name": "Vijayapura", "aliases": ["Bijapur"] },
+      { "name": "Udupi" },
+      { "name": "Chikkamagaluru", "aliases": ["Chikmagalur"] },
+      { "name": "Karwar" },
+      { "name": "Bagalkot" },
+      { "name": "Mandya" },
+      { "name": "Raichur" },
+      { "name": "Gadag" },
+      { "name": "Kolar" },
+      { "name": "Chitradurga" },
+      { "name": "Chamarajanagar" },
+      { "name": "Hosapete", "aliases": ["Hospet"] },
+      { "name": "Bidar" },
+      { "name": "Koppal" },
+      { "name": "Yadgir" },
+      { "name": "Madikeri" },
+      { "name": "Sirsi" },
+      { "name": "Puttur" }
+    ]
     },
     {
-      "code": "IN-KL",
-      "name": "Kerala",
-      "type": "STATE",
-      "cities": [
-        { "name": "Thiruvananthapuram", "aliases": ["Trivandrum"] },
-        { "name": "Kochi", "aliases": ["Cochin"] },
-        { "name": "Kozhikode", "aliases": ["Calicut"] },
-        { "name": "Thrissur", "aliases": ["Trichur"] },
-        { "name": "Kannur" },
-        { "name": "Alappuzha", "aliases": ["Alleppey"] },
-        { "name": "Kottayam" },
-        { "name": "Malappuram" },
-        { "name": "Pathanamthitta" }
-      ]
+    "code": "IN-KL",
+    "name": "Kerala",
+    "type": "STATE",
+    "cities": [
+      { "name": "Thiruvananthapuram", "aliases": ["Trivandrum"] },
+      { "name": "Kochi", "aliases": ["Cochin"] },
+      { "name": "Kozhikode", "aliases": ["Calicut"] },
+      { "name": "Thrissur", "aliases": ["Trichur"] },
+      { "name": "Kannur" },
+      { "name": "Alappuzha", "aliases": ["Alleppey"] },
+      { "name": "Kottayam" },
+      { "name": "Malappuram" },
+      { "name": "Pathanamthitta" },
+      { "name": "Kollam", "aliases": ["Quilon"] },
+      { "name": "Palakkad", "aliases": ["Palghat"] },
+      { "name": "Kasaragod" },
+      { "name": "Kalpetta" },
+      { "name": "Vatakara", "aliases": ["Vadakara"] },
+      { "name": "Tirur" },
+      { "name": "Manjeri" },
+      { "name": "Perinthalmanna" },
+      { "name": "Payyannur" },
+      { "name": "Muvattupuzha" },
+      { "name": "Punalur" },
+      { "name": "Changanassery" },
+      { "name": "Chengannur" },
+      { "name": "Kothamangalam" },
+      { "name": "Neyyattinkara" }
+    ]
     },
     {
-      "code": "IN-LA",
-      "name": "Ladakh",
-      "type": "UNION_TERRITORY",
-      "cities": [
-        { "name": "Leh" },
-        { "name": "Kargil" }
-      ]
+    "code": "IN-LA",
+    "name": "Ladakh",
+    "type": "UNION_TERRITORY",
+    "cities": [
+      { "name": "Leh" },
+      { "name": "Kargil" }
+    ]
     },
     {
-      "code": "IN-LD",
-      "name": "Lakshadweep",
-      "type": "UNION_TERRITORY",
-      "cities": [
-        { "name": "Kavaratti" }
-      ]
+    "code": "IN-LD",
+    "name": "Lakshadweep",
+    "type": "UNION_TERRITORY",
+    "cities": [
+      { "name": "Kavaratti" },
+      { "name": "Minicoy", "aliases": ["Maliku"] },
+      { "name": "Andrott" },
+      { "name": "Amini" },
+      { "name": "Kadmat" }
+    ]
     },
     {
-      "code": "IN-MH",
-      "name": "Maharashtra",
-      "type": "STATE",
-      "districts": [
-        { "name": "Pune", "cities": [
-          { "name": "Pune", "aliases": ["Poona"] },
-          { "name": "Pimpri Chinchwad", "aliases": ["PCMC"] },
-          { "name": "Lonavala" }
-        ] },
-        { "name": "Mumbai City", "cities": [{ "name": "Mumbai", "aliases": ["Bombay"] }] },
-        { "name": "Thane", "cities": [
-          { "name": "Thane" },
-          { "name": "Navi Mumbai", "aliases": ["New Bombay"] },
-          { "name": "Kalyan" }
-        ] },
-        { "name": "Nagpur", "cities": [{ "name": "Nagpur" }] }
-      ],
-      "cities": [
-        { "name": "Nashik", "aliases": ["Nasik"] },
-        { "name": "Aurangabad", "aliases": ["Chhatrapati Sambhajinagar"] },
-        { "name": "Solapur" },
-        { "name": "Amravati" },
-        { "name": "Kolhapur" },
-        { "name": "Sangli" },
-        { "name": "Malegaon" },
-        { "name": "Akola" },
-        { "name": "Latur" },
-        { "name": "Dhule" }
-      ]
+    "code": "IN-MH",
+    "name": "Maharashtra",
+    "type": "STATE",
+    "districts": [
+      { "name": "Pune", "cities": [{ "name": "Pune", "aliases": ["Poona"] }, { "name": "Pimpri Chinchwad", "aliases": ["PCMC"] }, { "name": "Lonavala" }] },
+      { "name": "Mumbai City", "cities": [{ "name": "Mumbai", "aliases": ["Bombay"] }] },
+      { "name": "Thane", "cities": [{ "name": "Thane" }, { "name": "Navi Mumbai", "aliases": ["New Bombay"] }, { "name": "Kalyan" }] },
+      { "name": "Nagpur", "cities": [{ "name": "Nagpur" }] }
+    ],
+    "cities": [
+      { "name": "Nashik", "aliases": ["Nasik"] },
+      { "name": "Aurangabad", "aliases": ["Chhatrapati Sambhajinagar"] },
+      { "name": "Solapur" },
+      { "name": "Amravati" },
+      { "name": "Kolhapur" },
+      { "name": "Sangli" },
+      { "name": "Malegaon" },
+      { "name": "Akola" },
+      { "name": "Latur" },
+      { "name": "Dhule" },
+      { "name": "Satara" },
+      { "name": "Jalgaon" },
+      { "name": "Ahmednagar" },
+      { "name": "Ratnagiri" },
+      { "name": "Nanded", "aliases": ["Nanded-Waghala"] },
+      { "name": "Chandrapur" },
+      { "name": "Yavatmal" },
+      { "name": "Wardha" },
+      { "name": "Parbhani" },
+      { "name": "Beed", "aliases": ["Bid"] },
+      { "name": "Buldhana" },
+      { "name": "Nandurbar" },
+      { "name": "Washim" },
+      { "name": "Gondia", "aliases": ["Gondiya"] },
+      { "name": "Alibag" },
+      { "name": "Kudal" },
+      { "name": "Ulhasnagar" },
+      { "name": "Ambarnath", "aliases": ["Ambernath"] },
+      { "name": "Dombivli" },
+      { "name": "Dharashiv", "aliases": ["Osmanabad"] },
+      { "name": "Ichalkaranji" }
+    ]
     },
     {
-      "code": "IN-ML",
-      "name": "Meghalaya",
-      "type": "STATE",
-      "cities": [
-        { "name": "Shillong" },
-        { "name": "Tura" },
-        { "name": "Nongpoh" }
-      ]
+    "code": "IN-ML",
+    "name": "Meghalaya",
+    "type": "STATE",
+    "cities": [
+      { "name": "Shillong" },
+      { "name": "Tura" },
+      { "name": "Nongpoh" },
+      { "name": "Jowai" },
+      { "name": "Williamnagar" },
+      { "name": "Baghmara" },
+      { "name": "Resubelpara" }
+    ]
     },
     {
-      "code": "IN-MN",
-      "name": "Manipur",
-      "type": "STATE",
-      "cities": [
-        { "name": "Imphal" },
-        { "name": "Thoubal" },
-        { "name": "Bishnupur" }
-      ]
+    "code": "IN-MN",
+    "name": "Manipur",
+    "type": "STATE",
+    "cities": [
+      { "name": "Imphal" },
+      { "name": "Thoubal" },
+      { "name": "Bishnupur" },
+      { "name": "Churachandpur" },
+      { "name": "Kakching" },
+      { "name": "Ukhrul" },
+      { "name": "Senapati" },
+      { "name": "Moreh" },
+      { "name": "Jiribam" }
+    ]
     },
     {
-      "code": "IN-MP",
-      "name": "Madhya Pradesh",
-      "type": "STATE",
-      "cities": [
-        { "name": "Bhopal" },
-        { "name": "Indore" },
-        { "name": "Gwalior" },
-        { "name": "Jabalpur" },
-        { "name": "Ujjain" },
-        { "name": "Sagar" },
-        { "name": "Dewas" },
-        { "name": "Satna" },
-        { "name": "Ratlam" },
-        { "name": "Katni" }
-      ]
+    "code": "IN-MP",
+    "name": "Madhya Pradesh",
+    "type": "STATE",
+    "cities": [
+      { "name": "Bhopal" },
+      { "name": "Indore" },
+      { "name": "Gwalior" },
+      { "name": "Jabalpur" },
+      { "name": "Ujjain" },
+      { "name": "Sagar" },
+      { "name": "Dewas" },
+      { "name": "Satna" },
+      { "name": "Ratlam" },
+      { "name": "Katni" },
+      { "name": "Rewa" },
+      { "name": "Singrauli" },
+      { "name": "Vidisha" },
+      { "name": "Sehore" },
+      { "name": "Betul" },
+      { "name": "Chhindwara" },
+      { "name": "Hoshangabad", "aliases": ["Narmadapuram"] },
+      { "name": "Khandwa" },
+      { "name": "Khargone" },
+      { "name": "Burhanpur" },
+      { "name": "Neemuch" },
+      { "name": "Mandsaur" },
+      { "name": "Guna" },
+      { "name": "Shivpuri" },
+      { "name": "Ashoknagar" },
+      { "name": "Damoh" },
+      { "name": "Chhatarpur" },
+      { "name": "Khajuraho" },
+      { "name": "Dabra" },
+      { "name": "Pithampur" },
+      { "name": "Morena" },
+      { "name": "Chitrakoot" }
+    ]
     },
     {
-      "code": "IN-MZ",
-      "name": "Mizoram",
-      "type": "STATE",
-      "cities": [
-        { "name": "Aizawl" },
-        { "name": "Lunglei" }
-      ]
+    "code": "IN-MZ",
+    "name": "Mizoram",
+    "type": "STATE",
+    "cities": [
+      { "name": "Aizawl" },
+      { "name": "Lunglei" },
+      { "name": "Champhai" },
+      { "name": "Serchhip" },
+      { "name": "Siaha", "aliases": ["Saiha"] },
+      { "name": "Kolasib" }
+    ]
     },
     {
-      "code": "IN-NL",
-      "name": "Nagaland",
-      "type": "STATE",
-      "cities": [
-        { "name": "Kohima" },
-        { "name": "Dimapur" },
-        { "name": "Mokokchung" }
-      ]
+    "code": "IN-NL",
+    "name": "Nagaland",
+    "type": "STATE",
+    "cities": [
+      { "name": "Kohima" },
+      { "name": "Dimapur" },
+      { "name": "Mokokchung" },
+      { "name": "Tuensang" },
+      { "name": "Wokha" },
+      { "name": "Mon" },
+      { "name": "Zunheboto" },
+      { "name": "Phek" },
+      { "name": "Peren" }
+    ]
     },
     {
-      "code": "IN-OR",
-      "name": "Odisha",
-      "type": "STATE",
-      "cities": [
-        { "name": "Bhubaneswar" },
-        { "name": "Cuttack" },
-        { "name": "Rourkela" },
-        { "name": "Puri" },
-        { "name": "Berhampur", "aliases": ["Brahmapur"] },
-        { "name": "Balasore" },
-        { "name": "Sambalpur" }
-      ]
+    "code": "IN-OR",
+    "name": "Odisha",
+    "type": "STATE",
+    "cities": [
+      { "name": "Bhubaneswar" },
+      { "name": "Cuttack" },
+      { "name": "Rourkela" },
+      { "name": "Puri" },
+      { "name": "Berhampur", "aliases": ["Brahmapur"] },
+      { "name": "Balasore" },
+      { "name": "Sambalpur" },
+      { "name": "Jharsuguda" },
+      { "name": "Barbil" },
+      { "name": "Bhadrak" },
+      { "name": "Jajpur" },
+      { "name": "Jatni" },
+      { "name": "Kendujhar", "aliases": ["Keonjhar"] },
+      { "name": "Angul" },
+      { "name": "Balangir" },
+      { "name": "Bargarh" },
+      { "name": "Dhenkanal" },
+      { "name": "Paradip" },
+      { "name": "Rayagada" },
+      { "name": "Koraput" },
+      { "name": "Jeypore" },
+      { "name": "Konark" },
+      { "name": "Titilagarh" }
+    ]
     },
     {
-      "code": "IN-PB",
-      "name": "Punjab",
-      "type": "STATE",
-      "cities": [
-        { "name": "Ludhiana" },
-        { "name": "Amritsar" },
-        { "name": "Jalandhar" },
-        { "name": "Patiala" },
-        { "name": "Bathinda" },
-        { "name": "Mohali", "aliases": ["Sahibzada Ajit Singh Nagar"] },
-        { "name": "Hoshiarpur" }
-      ]
+    "code": "IN-PB",
+    "name": "Punjab",
+    "type": "STATE",
+    "cities": [
+      { "name": "Ludhiana" },
+      { "name": "Amritsar" },
+      { "name": "Jalandhar" },
+      { "name": "Patiala" },
+      { "name": "Bathinda" },
+      { "name": "Mohali", "aliases": ["Sahibzada Ajit Singh Nagar"] },
+      { "name": "Hoshiarpur" },
+      { "name": "Sangrur" },
+      { "name": "Barnala" },
+      { "name": "Moga" },
+      { "name": "Ferozepur" },
+      { "name": "Fazilka" },
+      { "name": "Mansa" },
+      { "name": "Nawanshahr", "aliases": ["Shaheed Bhagat Singh Nagar"] },
+      { "name": "Gurdaspur" },
+      { "name": "Batala" },
+      { "name": "Rupnagar", "aliases": ["Ropar"] },
+      { "name": "Zirakpur" },
+      { "name": "Khanna" },
+      { "name": "Malerkotla" },
+      { "name": "Pathankot" },
+      { "name": "Phagwara" },
+      { "name": "Nakodar" },
+      { "name": "Sunam" },
+      { "name": "Rajpura" }
+    ]
     },
     {
-      "code": "IN-PY",
-      "name": "Puducherry",
-      "type": "UNION_TERRITORY",
-      "cities": [
-        { "name": "Puducherry", "aliases": ["Pondicherry"] },
-        { "name": "Karaikal" },
-        { "name": "Mahe" },
-        { "name": "Yanam" }
-      ]
+    "code": "IN-PY",
+    "name": "Puducherry",
+    "type": "UNION_TERRITORY",
+    "cities": [
+      { "name": "Puducherry", "aliases": ["Pondicherry"] },
+      { "name": "Karaikal" },
+      { "name": "Mahe" },
+      { "name": "Yanam" }
+    ]
     },
     {
-      "code": "IN-RJ",
-      "name": "Rajasthan",
-      "type": "STATE",
-      "cities": [
-        { "name": "Jaipur" },
-        { "name": "Jodhpur" },
-        { "name": "Udaipur" },
-        { "name": "Kota" },
-        { "name": "Bikaner" },
-        { "name": "Ajmer" },
-        { "name": "Alwar" },
-        { "name": "Bharatpur" },
-        { "name": "Sikar" },
-        { "name": "Pali" }
-      ]
+    "code": "IN-RJ",
+    "name": "Rajasthan",
+    "type": "STATE",
+    "cities": [
+      { "name": "Jaipur" },
+      { "name": "Jodhpur" },
+      { "name": "Udaipur" },
+      { "name": "Kota" },
+      { "name": "Bikaner" },
+      { "name": "Ajmer" },
+      { "name": "Alwar" },
+      { "name": "Bharatpur" },
+      { "name": "Sikar" },
+      { "name": "Pali" },
+      { "name": "Bhilwara" },
+      { "name": "Chittorgarh" },
+      { "name": "Nagaur" },
+      { "name": "Jhunjhunu" },
+      { "name": "Churu" },
+      { "name": "Sri Ganganagar" },
+      { "name": "Hanumangarh" },
+      { "name": "Beawar" },
+      { "name": "Tonk" },
+      { "name": "Bundi" },
+      { "name": "Baran" },
+      { "name": "Jhalawar" },
+      { "name": "Jaisalmer" },
+      { "name": "Barmer" },
+      { "name": "Sawai Madhopur" },
+      { "name": "Karauli" },
+      { "name": "Dholpur" },
+      { "name": "Banswara" },
+      { "name": "Dungarpur" },
+      { "name": "Rajsamand" },
+      { "name": "Sirohi" }
+    ]
     },
     {
-      "code": "IN-SK",
-      "name": "Sikkim",
-      "type": "STATE",
-      "cities": [
-        { "name": "Gangtok" },
-        { "name": "Namchi" },
-        { "name": "Lachung" }
-      ]
+    "code": "IN-SK",
+    "name": "Sikkim",
+    "type": "STATE",
+    "cities": [
+      { "name": "Gangtok" },
+      { "name": "Namchi" },
+      { "name": "Lachung" },
+      { "name": "Mangan" },
+      { "name": "Pelling" },
+      { "name": "Gyalshing", "aliases": ["Gyalsing"] },
+      { "name": "Rangpo" },
+      { "name": "Soreng" },
+      { "name": "Singtam" }
+    ]
     },
     {
-      "code": "IN-TN",
-      "name": "Tamil Nadu",
-      "type": "STATE",
-      "districts": [
-        { "name": "Chennai", "cities": [{ "name": "Chennai", "aliases": ["Madras"] }] }
-      ],
-      "cities": [
-        { "name": "Coimbatore" },
-        { "name": "Madurai" },
-        { "name": "Tiruchirappalli", "aliases": ["Trichy"] },
-        { "name": "Salem" },
-        { "name": "Erode" },
-        { "name": "Vellore" },
-        { "name": "Tirunelveli" },
-        { "name": "Thoothukudi", "aliases": ["Tuticorin"] },
-        { "name": "Dhanushkodi" },
-        { "name": "Thanjavur" },
-        { "name": "Kanyakumari" },
-        { "name": "Nagercoil" }
-      ]
+    "code": "IN-TN",
+    "name": "Tamil Nadu",
+    "type": "STATE",
+    "districts": [
+      { "name": "Chennai", "cities": [{ "name": "Chennai", "aliases": ["Madras"] }] }
+    ],
+    "cities": [
+      { "name": "Coimbatore" },
+      { "name": "Madurai" },
+      { "name": "Tiruchirappalli", "aliases": ["Trichy"] },
+      { "name": "Salem" },
+      { "name": "Erode" },
+      { "name": "Vellore" },
+      { "name": "Tirunelveli" },
+      { "name": "Thoothukudi", "aliases": ["Tuticorin"] },
+      { "name": "Dhanushkodi" },
+      { "name": "Thanjavur" },
+      { "name": "Kanyakumari" },
+      { "name": "Nagercoil" },
+      { "name": "Tiruppur", "aliases": ["Tirupur"] },
+      { "name": "Hosur" },
+      { "name": "Kumbakonam" },
+      { "name": "Karaikudi" },
+      { "name": "Sivakasi" },
+      { "name": "Rajapalayam" },
+      { "name": "Cuddalore" },
+      { "name": "Krishnagiri" },
+      { "name": "Dharmapuri" },
+      { "name": "Karur" },
+      { "name": "Tiruvannamalai" },
+      { "name": "Viluppuram", "aliases": ["Villupuram"] },
+      { "name": "Ramanathapuram" },
+      { "name": "Dindigul" },
+      { "name": "Nagapattinam" },
+      { "name": "Chidambaram" },
+      { "name": "Tiruvallur" },
+      { "name": "Kanchipuram", "aliases": ["Kancheepuram"] },
+      { "name": "Perambalur" },
+      { "name": "Ariyalur" },
+      { "name": "Pollachi" },
+      { "name": "Gobichettipalayam" },
+      { "name": "Palani" },
+      { "name": "Mayiladuthurai" }
+    ]
     },
     {
-      "code": "IN-TR",
-      "name": "Tripura",
-      "type": "STATE",
-      "cities": [
-        { "name": "Agartala" },
-        { "name": "Udaipur" },
-        { "name": "Dharmanagar" }
-      ]
+    "code": "IN-TR",
+    "name": "Tripura",
+    "type": "STATE",
+    "cities": [
+      { "name": "Agartala" },
+      { "name": "Udaipur" },
+      { "name": "Dharmanagar" },
+      { "name": "Kailashahar" },
+      { "name": "Bishalgarh" },
+      { "name": "Sonamura" },
+      { "name": "Khowai" },
+      { "name": "Belonia" },
+      { "name": "Amarpur" },
+      { "name": "Sabroom" },
+      { "name": "Ambassa" }
+    ]
     },
     {
-      "code": "IN-TS",
-      "name": "Telangana",
-      "type": "STATE",
-      "districts": [
-        { "name": "Hyderabad", "cities": [{ "name": "Hyderabad" }] }
-      ],
-      "cities": [
-        { "name": "Warangal" },
-        { "name": "Nizamabad" },
-        { "name": "Karimnagar" },
-        { "name": "Khammam" },
-        { "name": "Siddipet" }
-      ]
+    "code": "IN-TS",
+    "name": "Telangana",
+    "type": "STATE",
+    "districts": [
+      { "name": "Hyderabad", "cities": [{ "name": "Hyderabad" }] }
+    ],
+    "cities": [
+      { "name": "Warangal" },
+      { "name": "Nizamabad" },
+      { "name": "Karimnagar" },
+      { "name": "Khammam" },
+      { "name": "Siddipet" },
+      { "name": "Ramagundam" },
+      { "name": "Adilabad" },
+      { "name": "Nalgonda" },
+      { "name": "Mahabubnagar", "aliases": ["Mahbubnagar"] },
+      { "name": "Suryapet" },
+      { "name": "Miryalaguda" },
+      { "name": "Jagtial" },
+      { "name": "Sangareddy" },
+      { "name": "Mancherial" },
+      { "name": "Nirmal" }
+    ]
     },
     {
-      "code": "IN-UP",
-      "name": "Uttar Pradesh",
-      "type": "STATE",
-      "districts": [
-        { "name": "Gautam Buddha Nagar", "cities": [{ "name": "Noida" }] },
-        { "name": "Lucknow", "cities": [{ "name": "Lucknow" }] },
-        { "name": "Kanpur Nagar", "cities": [{ "name": "Kanpur", "aliases": ["Cawnpore"] }] }
-      ],
-      "cities": [
-        { "name": "Ghaziabad" },
-        { "name": "Agra" },
-        { "name": "Varanasi", "aliases": ["Banaras", "Kashi"] },
-        { "name": "Prayagraj", "aliases": ["Allahabad"] },
-        { "name": "Meerut" },
-        { "name": "Bareilly" },
-        { "name": "Aligarh" },
-        { "name": "Moradabad" },
-        { "name": "Gorakhpur" },
-        { "name": "Noida" },
-        { "name": "Jhansi" },
-        { "name": "Saharanpur" },
-        { "name": "Mathura" }
-      ]
+    "code": "IN-UP",
+    "name": "Uttar Pradesh",
+    "type": "STATE",
+    "districts": [
+      { "name": "Gautam Buddha Nagar", "cities": [{ "name": "Noida" }] },
+      { "name": "Lucknow", "cities": [{ "name": "Lucknow" }] },
+      { "name": "Kanpur Nagar", "cities": [{ "name": "Kanpur", "aliases": ["Cawnpore"] }] }
+    ],
+    "cities": [
+      { "name": "Ghaziabad" },
+      { "name": "Agra" },
+      { "name": "Varanasi", "aliases": ["Banaras", "Kashi"] },
+      { "name": "Prayagraj", "aliases": ["Allahabad"] },
+      { "name": "Meerut" },
+      { "name": "Bareilly" },
+      { "name": "Aligarh" },
+      { "name": "Moradabad" },
+      { "name": "Gorakhpur" },
+      { "name": "Jhansi" },
+      { "name": "Saharanpur" },
+      { "name": "Mathura" },
+      { "name": "Ayodhya", "aliases": ["Faizabad"] },
+      { "name": "Azamgarh" },
+      { "name": "Ballia" },
+      { "name": "Basti" },
+      { "name": "Deoria" },
+      { "name": "Etawah" },
+      { "name": "Firozabad" },
+      { "name": "Ghazipur" },
+      { "name": "Jaunpur" },
+      { "name": "Lakhimpur", "aliases": ["Lakhimpur Kheri"] },
+      { "name": "Mainpuri" },
+      { "name": "Mirzapur" },
+      { "name": "Muzaffarnagar" },
+      { "name": "Pratapgarh" },
+      { "name": "Raebareli", "aliases": ["Rae Bareli"] },
+      { "name": "Rampur" },
+      { "name": "Robertsganj", "aliases": ["Sonbhadra"] },
+      { "name": "Sambhal" },
+      { "name": "Shahjahanpur" },
+      { "name": "Sitapur" },
+      { "name": "Sultanpur" },
+      { "name": "Budaun", "aliases": ["Badaun"] },
+      { "name": "Bijnor" },
+      { "name": "Hardoi" },
+      { "name": "Kushinagar", "aliases": ["Kasia"] },
+      { "name": "Mau" },
+      { "name": "Amroha" },
+      { "name": "Etah" },
+      { "name": "Farrukhabad" },
+      { "name": "Fatehpur" },
+      { "name": "Hathras" },
+      { "name": "Hapur" }
+    ]
     },
     {
-      "code": "IN-UT",
-      "name": "Uttarakhand",
-      "type": "STATE",
-      "cities": [
-        { "name": "Dehradun" },
-        { "name": "Haridwar" },
-        { "name": "Rishikesh" },
-        { "name": "Haldwani" },
-        { "name": "Rudrapur" },
-        { "name": "Kashipur" }
-      ]
+    "code": "IN-UT",
+    "name": "Uttarakhand",
+    "type": "STATE",
+    "cities": [
+      { "name": "Dehradun" },
+      { "name": "Haridwar" },
+      { "name": "Rishikesh" },
+      { "name": "Haldwani" },
+      { "name": "Rudrapur" },
+      { "name": "Kashipur" },
+      { "name": "Roorkee" },
+      { "name": "Mussoorie" },
+      { "name": "Almora" },
+      { "name": "Nainital" },
+      { "name": "Pithoragarh" },
+      { "name": "Ramnagar" },
+      { "name": "Kotdwar" },
+      { "name": "Bageshwar" },
+      { "name": "Champawat" },
+      { "name": "Ranikhet" },
+      { "name": "Joshimath" },
+      { "name": "Uttarkashi" },
+      { "name": "Tehri", "aliases": ["New Tehri"] }
+    ]
     },
     {
-      "code": "IN-WB",
-      "name": "West Bengal",
-      "type": "STATE",
-      "districts": [
-        { "name": "Kolkata", "cities": [{ "name": "Kolkata", "aliases": ["Calcutta"] }] }
-      ],
-      "cities": [
-        { "name": "Howrah" },
-        { "name": "Siliguri" },
-        { "name": "Durgapur" },
-        { "name": "Asansol" },
-        { "name": "Darjeeling" },
-        { "name": "Malda" },
-        { "name": "Jalpaiguri" },
-        { "name": "Behala" },
-        { "name": "Barasat" }
-      ]
+    "code": "IN-WB",
+    "name": "West Bengal",
+    "type": "STATE",
+    "districts": [
+      { "name": "Kolkata", "cities": [{ "name": "Kolkata", "aliases": ["Calcutta"] }] }
+    ],
+    "cities": [
+      { "name": "Howrah" },
+      { "name": "Siliguri" },
+      { "name": "Durgapur" },
+      { "name": "Asansol" },
+      { "name": "Darjeeling" },
+      { "name": "Malda" },
+      { "name": "Jalpaiguri" },
+      { "name": "Behala" },
+      { "name": "Barasat" },
+      { "name": "Krishnanagar" },
+      { "name": "Ranaghat" },
+      { "name": "Naihati" },
+      { "name": "Serampore" },
+      { "name": "Chandannagar" },
+      { "name": "Bardhaman", "aliases": ["Burdwan", "Barddhaman"] },
+      { "name": "Bolpur" },
+      { "name": "Bankura" },
+      { "name": "Purulia" },
+      { "name": "Haldia" },
+      { "name": "Kharagpur" },
+      { "name": "Jhargram" },
+      { "name": "Alipurduar" },
+      { "name": "Raiganj" },
+      { "name": "Balurghat" },
+      { "name": "Berhampore", "aliases": ["Baharampur"] },
+      { "name": "Diamond Harbour" },
+      { "name": "Kalimpong" }
+    ]
     }
   ]
 }
