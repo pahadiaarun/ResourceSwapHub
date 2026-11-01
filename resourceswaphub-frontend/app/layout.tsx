@@ -22,6 +22,12 @@ const fraunces = Fraunces({
 /** Public origin for canonical/OpenGraph URLs. Unset in local development. */
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL;
 
+/**
+ * Favicons are cached aggressively by browsers; bump this to force a refresh when
+ * the icon assets change.
+ */
+const ICON_VERSION = "v=2";
+
 export const metadata: Metadata = {
   ...(siteUrl ? { metadataBase: new URL(siteUrl) } : {}),
   title: {
@@ -39,12 +45,12 @@ export const metadata: Metadata = {
   },
   icons: {
     icon: [
-      { url: "/favicon.ico", sizes: "any", type: "image/x-icon" },
-      { url: "/icons/icon-192.png", sizes: "192x192", type: "image/png" },
-      { url: "/icons/icon-512.png", sizes: "512x512", type: "image/png" },
+      { url: `/favicon.svg?${ICON_VERSION}`, type: "image/svg+xml", sizes: "any" },
+      { url: `/favicon.ico?${ICON_VERSION}`, type: "image/x-icon" },
+      { url: `/favicon-32x32.png?${ICON_VERSION}`, type: "image/png", sizes: "32x32" },
+      { url: `/favicon-16x16.png?${ICON_VERSION}`, type: "image/png", sizes: "16x16" },
     ],
-    shortcut: [{ url: "/favicon.ico", sizes: "any", type: "image/x-icon" }],
-    apple: [{ url: "/icons/apple-touch-icon.png", sizes: "180x180" }],
+    apple: [{ url: `/icons/apple-touch-icon.png?${ICON_VERSION}`, type: "image/png", sizes: "180x180" }],
   },
   openGraph: {
     title: "ResourceSwapHub — resources find their next student",
