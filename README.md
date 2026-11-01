@@ -13,9 +13,9 @@ together locally; GitHub Actions runs the CI gates.
 
 ```
 ResourceSwapHub/
-├── ResourceSwapHub Backend/    # Spring Boot API (REST + WebSocket), Java 21
-├── ResourceSwapHub FrontEnd/   # Next.js App Router web client, installable PWA
-├── ResourceSwapHub database/   # Flyway migrations, seeds, scripts and schema documentation
+├── resourceswaphub-backend/    # Spring Boot API (REST + WebSocket), Java 21
+├── resourceswaphub-frontend/   # Next.js App Router web client, installable PWA
+├── resourceswaphub-database/   # Flyway migrations, seeds, scripts and schema documentation
 ├── docker-compose.yml
 ├── Makefile
 └── .github/workflows/ci.yml
@@ -39,32 +39,32 @@ Then open:
 The API container migrates the database with Flyway on boot. Database user and
 credentials in Compose match the application defaults (`bookbridge` /
 `bookbridge_dev`) and the database is published on host port **55432** so the
-`ResourceSwapHub database/scripts` tools work unchanged.
+`resourceswaphub-database/scripts` tools work unchanged.
 
 ### Option B — no Docker
 
 1. **PostgreSQL 17** (no Docker daemon required):
 
    ```bash
-   make db                 # or "./ResourceSwapHub database/scripts/local-postgres.sh" start
+   make db                 # or ./resourceswaphub-database/scripts/local-postgres.sh start
    ```
 
 2. **API** (Flyway migrates automatically at boot):
 
    ```bash
-   make api                # cd "ResourceSwapHub Backend" && ./mvnw spring-boot:run
+   make api                # cd resourceswaphub-backend && ./mvnw spring-boot:run
    ```
 
 3. **Web**:
 
    ```bash
-   make web                # cd "ResourceSwapHub FrontEnd" && npm install && npm run dev
+   make web                # cd resourceswaphub-frontend && npm install && npm run dev
    ```
 
 4. Optional demo community (3 users, 10 listings, 2 collections, 2 chats):
 
    ```bash
-   make db-seed            # "./ResourceSwapHub database/scripts/local-postgres.sh" seed all
+   make db-seed            # ./resourceswaphub-database/scripts/local-postgres.sh seed all
    ```
 
 ### Demo accounts (after seeding)
@@ -101,8 +101,8 @@ Sign up any real account as normal — the demo data is development-only seed.
 ## Configuration
 
 Both apps are configured through environment variables (see complete annotated
-examples in [`ResourceSwapHub Backend/.env.example`](ResourceSwapHub%20Backend/.env.example) and
-[`ResourceSwapHub FrontEnd/.env.example`](ResourceSwapHub%20FrontEnd/.env.example)). Credentials are never
+examples in [`resourceswaphub-backend/.env.example`](resourceswaphub-backend/.env.example) and
+[`resourceswaphub-frontend/.env.example`](resourceswaphub-frontend/.env.example)). Credentials are never
 hardcoded; JWT secrets must be provided in any real deployment.
 
 Backend variables use the `BOOKBRIDGE_` prefix (a deliberate internal
@@ -161,7 +161,7 @@ complete the manual steps below.
    - `NEXT_PUBLIC_WS_URL=wss://resourceswaphub.work.gd/ws` only if the API is
      served on a separate public origin; under the same domain the dev default
      (which appends port 8080) does not apply — see the `wsUrl()` helper in
-     `ResourceSwapHub FrontEnd/components/inbox-workspace.tsx`.
+     `resourceswaphub-frontend/components/inbox-workspace.tsx`.
    - `BACKEND_URL=http://api:8080` (container-internal) or the API's public URL.
 5. **OAuth (optional Google sign-in)** — in your Google OAuth client add the
    authorized JavaScript origin `https://resourceswaphub.work.gd` and set the
@@ -177,7 +177,7 @@ complete the manual steps below.
 
 Flyway is the source of truth for DDL (`ResourceSwapHub
 database/migrations/V1…V6`). Every table
-is documented in [`ResourceSwapHub database/docs/`](ResourceSwapHub%20database/docs) — ER diagram, schema
+is documented in [`resourceswaphub-database/docs/`](resourceswaphub-database/docs) — ER diagram, schema
 reference, data dictionary, indexing strategy, business constraints, query
 catalog, migration guide and backup/restore runbook. The database README
 explains how to run migrations against a fresh server and how to use the seed
@@ -192,7 +192,7 @@ works on Aiven or any managed PostgreSQL.
 
 ```bash
 make test          # backend: Spring Boot tests against real PostgreSQL
-cd "ResourceSwapHub FrontEnd" && npm run lint && npm run build
+cd resourceswaphub-frontend && npm run lint && npm run build
 ```
 
 The backend suite runs integration tests over real HTTP + STOMP (auth flows,

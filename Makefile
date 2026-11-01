@@ -3,7 +3,7 @@
 
 .DEFAULT_GOAL := help
 
-DB_SCRIPT := "./ResourceSwapHub database/scripts/local-postgres.sh"
+DB_SCRIPT := ./resourceswaphub-database/scripts/local-postgres.sh
 
 .PHONY: help
 help:
@@ -35,15 +35,15 @@ db-seed:
 
 .PHONY: api
 api:
-	cd "ResourceSwapHub Backend" && if [ -f .env ]; then set -a; . ./.env; set +a; fi && ./mvnw spring-boot:run
+	cd resourceswaphub-backend && if [ -f .env ]; then set -a; . ./.env; set +a; fi && ./mvnw spring-boot:run
 
 .PHONY: web
 web:
-	cd "ResourceSwapHub FrontEnd" && npm run dev
+	cd resourceswaphub-frontend && npm run dev
 
 .PHONY: test
 test:
-	cd "ResourceSwapHub Backend" && ./mvnw test
+	cd resourceswaphub-backend && ./mvnw test
 
 .PHONY: compose
 compose:

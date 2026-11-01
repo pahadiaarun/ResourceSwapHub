@@ -49,9 +49,9 @@ CREATE INDEX idx_listings_reserved
 
 ```bash
 # rebuild the local cluster, then let Flyway migrate from V1
-"./ResourceSwapHub database/scripts/local-postgres.sh" reset
-"./ResourceSwapHub database/scripts/local-postgres.sh" start
-cd "ResourceSwapHub Backend" && ./mvnw test
+./resourceswaphub-database/scripts/local-postgres.sh reset
+./resourceswaphub-database/scripts/local-postgres.sh start
+cd resourceswaphub-backend && ./mvnw test
 ```
 
 With Docker:
@@ -59,7 +59,7 @@ With Docker:
 ```bash
 docker compose down -v
 docker compose up -d postgres
-cd "ResourceSwapHub Backend" && ./mvnw spring-boot:run
+cd resourceswaphub-backend && ./mvnw spring-boot:run
 ```
 
 The integration tests run Flyway against `bookbridge_test`, so a broken

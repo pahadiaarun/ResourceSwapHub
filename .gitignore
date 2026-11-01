@@ -11,4 +11,4 @@
 !.env.example
 
 # Local PostgreSQL binaries and data (database/scripts/local-postgres.sh)
-ResourceSwapHub database/.local/
+resourceswaphub-database/.local/

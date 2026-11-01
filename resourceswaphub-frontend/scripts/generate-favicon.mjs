@@ -1,5 +1,5 @@
 // Regenerates public/favicon.ico (16/32/48 px) from public/icons/resourceswaphub-mark.svg.
-//   node scripts/generate-favicon.mjs   (run from "ResourceSwapHub FrontEnd/")
+//   node scripts/generate-favicon.mjs   (run from "resourceswaphub-frontend/")
 import sharp from "sharp";
 import { readFileSync, writeFileSync } from "node:fs";
 

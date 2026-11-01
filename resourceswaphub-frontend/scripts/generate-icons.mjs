@@ -1,5 +1,5 @@
 // Regenerates the PWA/favicon PNG set from public/icons/resourceswaphub-mark.svg.
-//   node scripts/generate-icons.mjs   (run from "ResourceSwapHub FrontEnd/")
+//   node scripts/generate-icons.mjs   (run from "resourceswaphub-frontend/")
 import sharp from "sharp";
 import { readFileSync } from "node:fs";
 

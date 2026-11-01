@@ -7,7 +7,7 @@ change DDL, and the application validates the resulting schema on every boot.
 ## Layout
 
 ```text
-ResourceSwapHub database/
+resourceswaphub-database/
 ├── README.md
 ├── docs/                 # design and operations documentation
 ├── migrations/           # Flyway versioned migrations (V1 … V6)
@@ -34,13 +34,13 @@ Flyway migrates automatically when the API starts.
 
 ### Option B — project-local PostgreSQL
 
-The script downloads PostgreSQL 17 binaries to `ResourceSwapHub database/.local`
+The script downloads PostgreSQL 17 binaries to `resourceswaphub-database/.local`
 and keeps its data directory there, so no Docker daemon is required.
 
 ```bash
-"./ResourceSwapHub database/scripts/local-postgres.sh" start   # initdb + start on 127.0.0.1:55432
-cd "ResourceSwapHub Backend" && ./mvnw spring-boot:run         # Flyway applies migrations
-cd .. && "./ResourceSwapHub database/scripts/local-postgres.sh" seed all
+./resourceswaphub-database/scripts/local-postgres.sh start   # initdb + start on 127.0.0.1:55432
+cd resourceswaphub-backend && ./mvnw spring-boot:run         # Flyway applies migrations
+cd .. && ./resourceswaphub-database/scripts/local-postgres.sh seed all
 ```
 
 `start` bootstraps two databases, `bookbridge` and `bookbridge_test`, with the
@@ -66,7 +66,7 @@ listens on loopback, so point your client at:
 A connection targeting `localhost:5432` fails by design — nothing else owns port
 5432 on this machine. To change the port or credentials, set `BOOKBRIDGE_DB_PORT`,
 `BOOKBRIDGE_DB_USER` or `BOOKBRIDGE_DB_PASSWORD` before running `start` (and
-update `"ResourceSwapHub Backend"/.env` to match).
+update `resourceswaphub-backend/.env` to match).
 
 ## Migrations
 
@@ -92,8 +92,8 @@ See [`docs/MIGRATION_GUIDE.md`](docs/MIGRATION_GUIDE.md) before writing one.
 ## Seeds
 
 ```bash
-"./ResourceSwapHub database/scripts/local-postgres.sh" seed reference  # canonical books only
-"./ResourceSwapHub database/scripts/local-postgres.sh" seed all        # books + demo community
+./resourceswaphub-database/scripts/local-postgres.sh seed reference  # canonical books only
+./resourceswaphub-database/scripts/local-postgres.sh seed all        # books + demo community
 ```
 
 - `reference/catalogue.sql` is idempotent and contains no personal data. It is
@@ -108,9 +108,9 @@ See [`docs/MIGRATION_GUIDE.md`](docs/MIGRATION_GUIDE.md) before writing one.
 ## Testing migrations against a fresh database
 
 ```bash
-"./ResourceSwapHub database/scripts/local-postgres.sh" reset
-"./ResourceSwapHub database/scripts/local-postgres.sh" start
-cd "ResourceSwapHub Backend" && ./mvnw test          # Flyway migrates bookbridge_test from V1
+./resourceswaphub-database/scripts/local-postgres.sh reset
+./resourceswaphub-database/scripts/local-postgres.sh start
+cd resourceswaphub-backend && ./mvnw test          # Flyway migrates bookbridge_test from V1
 ```
 
 The integration suite runs against real PostgreSQL, validates every Hibernate

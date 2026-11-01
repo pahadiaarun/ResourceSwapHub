@@ -30,7 +30,7 @@ services:
 
   api:
     build:
-      context: "./ResourceSwapHub Backend"
+      context: ./resourceswaphub-backend
       dockerfile: Dockerfile
     image: resourceswaphub/api:local
     depends_on:
@@ -52,7 +52,7 @@ services:
 
   web:
     build:
-      context: "./ResourceSwapHub FrontEnd"
+      context: ./resourceswaphub-frontend
       dockerfile: Dockerfile
       args:
         NEXT_PUBLIC_WS_URL: ws://localhost:8080/ws

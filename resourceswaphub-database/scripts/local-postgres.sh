@@ -1,11 +1,11 @@
 #!/usr/bin/env bash
 # Starts a project-local PostgreSQL 17 instance for development and verification.
 # Docker Compose remains the primary setup; this script is the fallback for machines
-# without Docker. Binaries are downloaded from Maven Central into "ResourceSwapHub database"/.local.
+# without Docker. Binaries are downloaded from Maven Central into resourceswaphub-database/.local.
 set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
-LOCAL_DIR="$ROOT_DIR/ResourceSwapHub database/.local"
+LOCAL_DIR="$ROOT_DIR/resourceswaphub-database/.local"
 PG_VERSION="${BOOKBRIDGE_PG_VERSION:-17.10.0}"
 PORT="${BOOKBRIDGE_DB_PORT:-55432}"
 DB_NAME="${BOOKBRIDGE_DB_NAME:-bookbridge}"
@@ -16,7 +16,7 @@ PG_DATA="$LOCAL_DIR/pgdata"
 LOG_FILE="$LOCAL_DIR/postgres.log"
 JDBC_VERSION="42.7.14"
 JDBC_JAR="$LOCAL_DIR/postgresql-$JDBC_VERSION.jar"
-TOOL="$ROOT_DIR/ResourceSwapHub database/scripts/DatabaseTool.java"
+TOOL="$ROOT_DIR/resourceswaphub-database/scripts/DatabaseTool.java"
 
 case "$(uname -s)" in
   Darwin) OS="darwin" ;;
@@ -142,8 +142,8 @@ seed() {
   BOOKBRIDGE_DB_USER="$DB_USER" \
   BOOKBRIDGE_DB_PASSWORD="$DB_PASSWORD" \
     run_tool run \
-      "$ROOT_DIR/ResourceSwapHub database/seeds/reference/catalogue.sql" \
-      $(if [[ "$which" != "reference" ]]; then echo "$ROOT_DIR/ResourceSwapHub database/seeds/development/demo.sql"; fi)
+      "$ROOT_DIR/resourceswaphub-database/seeds/reference/catalogue.sql" \
+      $(if [[ "$which" != "reference" ]]; then echo "$ROOT_DIR/resourceswaphub-database/seeds/development/demo.sql"; fi)
 }
 
 case "${1:-start}" in

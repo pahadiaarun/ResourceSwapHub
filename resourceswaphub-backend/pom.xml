@@ -147,7 +147,7 @@
 				<directory>src/main/resources</directory>
 			</resource>
 			<resource>
-				<directory>${project.basedir}/../ResourceSwapHub database/migrations</directory>
+				<directory>${project.basedir}/../resourceswaphub-database/migrations</directory>
 				<targetPath>db/migration</targetPath>
 				<filtering>false</filtering>
 			</resource>
