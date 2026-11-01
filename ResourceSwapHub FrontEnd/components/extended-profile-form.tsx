@@ -22,7 +22,7 @@ const CLASSES = ["6", "7", "8", "9", "10", "11", "12"];
 
 export function ExtendedProfileForm() {
   const queryClient = useQueryClient();
-  const [formData, setFormData] = useState<Record<string, any>>({});
+  const [formData, setFormData] = useState<Record<string, unknown>>({});
 
   const { data: profile, isLoading } = useQuery({
     queryKey: ["extended-profile"],
@@ -38,7 +38,7 @@ export function ExtendedProfileForm() {
     onError: (error) => toast.error(errorMessage(error)),
   });
 
-  function handleChange(key: string, value: any) {
+  function handleChange(key: string, value: unknown) {
     setFormData((prev) => ({ ...prev, [key]: value }));
   }
 
