@@ -43,7 +43,7 @@ export function Logo({ className }: { className?: string }) {
       aria-label="ResourceSwapHub home"
     >
       <LogoMark />
-      <span className="font-display text-xl font-semibold tracking-tight">
+      <span className="font-display text-lg font-semibold tracking-tight sm:text-xl">
         ResourceSwapHub
       </span>
     </Link>

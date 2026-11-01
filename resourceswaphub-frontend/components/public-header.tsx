@@ -81,8 +81,11 @@ export function PublicHeader() {
               >
                 Sign in
               </Button>
-              <Button render={<Link href="/register" />}>
-                Join ResourceSwapHub
+              <Button render={<Link href="/register" />} className="shrink-0">
+                {/* Shorten the CTA on the smallest screens so the header
+                    never widens the page beyond the viewport. */}
+                <span className="sm:hidden">Join</span>
+                <span className="hidden sm:inline">Join ResourceSwapHub</span>
               </Button>
             </>
           )}
