@@ -3,6 +3,11 @@ import type {
   CollectionDetail,
   CollectionSummary,
   Conversation,
+  Education,
+  EducationInput,
+  Employment,
+  EmploymentInput,
+  InstitutionFilters,
   Listing,
   Media,
   Message,
@@ -10,7 +15,10 @@ import type {
   PageResponse,
   SearchFilters,
   Taxonomy,
+  Topic,
   User,
+  UserTopic,
+  UserTopicInput,
 } from "./types";
 
 /**
@@ -350,6 +358,75 @@ unreadCount() {
       method: "POST",
       body: input,
     });
+  },
+  institutionFilters() {
+    return api<InstitutionFilters>("/institutions/filters", { auth: false });
+  },
+
+  // Education records (normalized, visibility-aware)
+  myEducation() {
+    return api<Education[]>("/profile/me/education");
+  },
+  createEducation(input: EducationInput) {
+    return api<Education>("/profile/me/education", {
+      method: "POST",
+      body: input,
+    });
+  },
+  updateEducation(id: string, input: EducationInput) {
+    return api<Education>(`/profile/me/education/${id}`, {
+      method: "PATCH",
+      body: input,
+    });
+  },
+  deleteEducation(id: string) {
+    return api<void>(`/profile/me/education/${id}`, { method: "DELETE" });
+  },
+  userEducation(userId: string) {
+    return api<Education[]>(`/profile/${userId}/education`);
+  },
+
+  // Employment records (normalized, visibility-aware)
+  myEmployment() {
+    return api<Employment[]>("/profile/me/employment");
+  },
+  createEmployment(input: EmploymentInput) {
+    return api<Employment>("/profile/me/employment", {
+      method: "POST",
+      body: input,
+    });
+  },
+  updateEmployment(id: string, input: EmploymentInput) {
+    return api<Employment>(`/profile/me/employment/${id}`, {
+      method: "PATCH",
+      body: input,
+    });
+  },
+  deleteEmployment(id: string) {
+    return api<void>(`/profile/me/employment/${id}`, { method: "DELETE" });
+  },
+  userEmployment(userId: string) {
+    return api<Employment[]>(`/profile/${userId}/employment`);
+  },
+
+  // Knowledge topics (skills / subjects / interests)
+  searchTopics(params: { q?: string; type?: string; limit?: number } = {}) {
+    return api<Topic[]>(`/topics/search${queryString(params)}`);
+  },
+  suggestTopic(input: { name: string; topicType?: string }) {
+    return api<Topic>("/topics/suggestions", { method: "POST", body: input });
+  },
+  myTopics() {
+    return api<UserTopic[]>("/profile/me/topics");
+  },
+  replaceTopics(items: UserTopicInput[]) {
+    return api<UserTopic[]>("/profile/me/topics", {
+      method: "PUT",
+      body: { items },
+    });
+  },
+  userTopics(userId: string) {
+    return api<UserTopic[]>(`/profile/${userId}/topics`);
   },
 };
 

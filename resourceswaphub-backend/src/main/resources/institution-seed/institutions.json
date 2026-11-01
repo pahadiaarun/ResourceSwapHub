@@ -1,0 +1,265 @@
+[
+  {
+    "name": "Indian Institute of Technology Delhi",
+    "type": "UNIVERSITY",
+    "state": "Delhi",
+    "city": "New Delhi",
+    "district": "South Delhi",
+    "aliases": [
+      { "name": "IIT Delhi", "type": "ABBREVIATION" },
+      { "name": "IITD", "type": "ABBREVIATION" },
+      { "name": "Indian Institute of Technology, Delhi", "type": "ALTERNATE" }
+    ]
+  },
+  {
+    "name": "Indian Institute of Technology Bombay",
+    "type": "UNIVERSITY",
+    "state": "Maharashtra",
+    "city": "Mumbai",
+    "district": "Mumbai Suburban",
+    "aliases": [
+      { "name": "IIT Bombay", "type": "ABBREVIATION" },
+      { "name": "IITB", "type": "ABBREVIATION" },
+      { "name": "IIT Mumbai", "type": "COMMON" }
+    ]
+  },
+  {
+    "name": "Indian Institute of Technology Madras",
+    "type": "UNIVERSITY",
+    "state": "Tamil Nadu",
+    "city": "Chennai",
+    "district": "Chennai",
+    "aliases": [
+      { "name": "IIT Madras", "type": "ABBREVIATION" },
+      { "name": "IITM", "type": "ABBREVIATION" },
+      { "name": "IIT Chennai", "type": "COMMON" }
+    ]
+  },
+  {
+    "name": "Indian Institute of Technology Kanpur",
+    "type": "UNIVERSITY",
+    "state": "Uttar Pradesh",
+    "city": "Kanpur",
+    "district": "Kanpur Nagar",
+    "aliases": [
+      { "name": "IIT Kanpur", "type": "ABBREVIATION" },
+      { "name": "IITK", "type": "ABBREVIATION" }
+    ]
+  },
+  {
+    "name": "Indian Institute of Technology Kharagpur",
+    "type": "UNIVERSITY",
+    "state": "West Bengal",
+    "city": "Kharagpur",
+    "district": "Paschim Medinipur",
+    "aliases": [
+      { "name": "IIT Kharagpur", "type": "ABBREVIATION" },
+      { "name": "IITKGP", "type": "ABBREVIATION" }
+    ]
+  },
+  {
+    "name": "Delhi Technological University",
+    "type": "UNIVERSITY",
+    "state": "Delhi",
+    "city": "Delhi",
+    "district": "North West Delhi",
+    "aliases": [
+      { "name": "DTU", "type": "ABBREVIATION" },
+      { "name": "Delhi College of Engineering", "type": "FORMER" },
+      { "name": "DCE", "type": "FORMER" }
+    ]
+  },
+  {
+    "name": "University of Delhi",
+    "type": "UNIVERSITY",
+    "state": "Delhi",
+    "city": "Delhi",
+    "district": "North Delhi",
+    "aliases": [
+      { "name": "Delhi University", "type": "COMMON" },
+      { "name": "DU", "type": "ABBREVIATION" }
+    ]
+  },
+  {
+    "name": "St. Stephen's College",
+    "type": "CONSTITUENT_COLLEGE",
+    "state": "Delhi",
+    "city": "Delhi",
+    "district": "North Delhi",
+    "aliases": [
+      { "name": "St Stephens College", "type": "ALTERNATE" },
+      { "name": "Stephens", "type": "COMMON" }
+    ]
+  },
+  {
+    "name": "All India Institute of Medical Sciences, New Delhi",
+    "type": "UNIVERSITY",
+    "state": "Delhi",
+    "city": "New Delhi",
+    "district": "South Delhi",
+    "aliases": [
+      { "name": "AIIMS Delhi", "type": "ABBREVIATION" },
+      { "name": "AIIMS", "type": "ABBREVIATION" }
+    ]
+  },
+  {
+    "name": "Delhi Public School, R. K. Puram",
+    "type": "SCHOOL",
+    "state": "Delhi",
+    "city": "New Delhi",
+    "district": "South West Delhi",
+    "aliases": [
+      { "name": "DPS RK Puram", "type": "ABBREVIATION" },
+      { "name": "DPS R.K. Puram", "type": "ALTERNATE" }
+    ]
+  },
+  {
+    "name": "National Institute of Technology, Tiruchirappalli",
+    "type": "UNIVERSITY",
+    "state": "Tamil Nadu",
+    "city": "Tiruchirappalli",
+    "district": "Tiruchirappalli",
+    "aliases": [
+      { "name": "NIT Trichy", "type": "ABBREVIATION" },
+      { "name": "NIT Tiruchirappalli", "type": "ALTERNATE" },
+      { "name": "NITT", "type": "ABBREVIATION" }
+    ]
+  },
+  {
+    "name": "Anna University",
+    "type": "UNIVERSITY",
+    "state": "Tamil Nadu",
+    "city": "Chennai",
+    "district": "Chennai",
+    "aliases": [
+      { "name": "CEG Guindy", "type": "COMMON" }
+    ]
+  },
+  {
+    "name": "Indian Institute of Science",
+    "type": "UNIVERSITY",
+    "state": "Karnataka",
+    "city": "Bengaluru",
+    "district": "Bengaluru Urban",
+    "aliases": [
+      { "name": "IISc", "type": "ABBREVIATION" },
+      { "name": "IISc Bangalore", "type": "COMMON" }
+    ]
+  },
+  {
+    "name": "National Institute of Technology Karnataka",
+    "type": "UNIVERSITY",
+    "state": "Karnataka",
+    "city": "Surathkal",
+    "district": "Dakshina Kannada",
+    "aliases": [
+      { "name": "NIT Surathkal", "type": "COMMON" },
+      { "name": "NITK", "type": "ABBREVIATION" }
+    ]
+  },
+  {
+    "name": "Birla Institute of Technology and Science, Pilani",
+    "type": "UNIVERSITY",
+    "state": "Rajasthan",
+    "city": "Pilani",
+    "district": "Jhunjhunu",
+    "aliases": [
+      { "name": "BITS Pilani", "type": "ABBREVIATION" },
+      { "name": "BITS", "type": "ABBREVIATION" }
+    ]
+  },
+  {
+    "name": "Vellore Institute of Technology",
+    "type": "UNIVERSITY",
+    "state": "Tamil Nadu",
+    "city": "Vellore",
+    "district": "Vellore",
+    "aliases": [
+      { "name": "VIT Vellore", "type": "ABBREVIATION" },
+      { "name": "VIT", "type": "ABBREVIATION" }
+    ]
+  },
+  {
+    "name": "Jadavpur University",
+    "type": "UNIVERSITY",
+    "state": "West Bengal",
+    "city": "Kolkata",
+    "district": "Kolkata",
+    "aliases": [
+      { "name": "JU", "type": "ABBREVIATION" }
+    ]
+  },
+  {
+    "name": "Presidency University",
+    "type": "UNIVERSITY",
+    "state": "West Bengal",
+    "city": "Kolkata",
+    "district": "Kolkata",
+    "aliases": [
+      { "name": "Presidency College, Kolkata", "type": "FORMER" }
+    ]
+  },
+  {
+    "name": "Banaras Hindu University",
+    "type": "UNIVERSITY",
+    "state": "Uttar Pradesh",
+    "city": "Varanasi",
+    "district": "Varanasi",
+    "aliases": [
+      { "name": "BHU", "type": "ABBREVIATION" }
+    ]
+  },
+  {
+    "name": "Aligarh Muslim University",
+    "type": "UNIVERSITY",
+    "state": "Uttar Pradesh",
+    "city": "Aligarh",
+    "district": "Aligarh",
+    "aliases": [
+      { "name": "AMU", "type": "ABBREVIATION" }
+    ]
+  },
+  {
+    "name": "Christ University",
+    "type": "UNIVERSITY",
+    "state": "Karnataka",
+    "city": "Bengaluru",
+    "district": "Bengaluru Urban",
+    "aliases": [
+      { "name": "Christ College", "type": "FORMER" }
+    ]
+  },
+  {
+    "name": "University of Hyderabad",
+    "type": "UNIVERSITY",
+    "state": "Telangana",
+    "city": "Hyderabad",
+    "district": "Ranga Reddy",
+    "aliases": [
+      { "name": "UoH", "type": "ABBREVIATION" },
+      { "name": "Hyderabad Central University", "type": "COMMON" }
+    ]
+  },
+  {
+    "name": "Savitribai Phule Pune University",
+    "type": "UNIVERSITY",
+    "state": "Maharashtra",
+    "city": "Pune",
+    "district": "Pune",
+    "aliases": [
+      { "name": "University of Pune", "type": "FORMER" },
+      { "name": "SPPU", "type": "ABBREVIATION" }
+    ]
+  },
+  {
+    "name": "Indian Institute of Management Ahmedabad",
+    "type": "UNIVERSITY",
+    "state": "Gujarat",
+    "city": "Ahmedabad",
+    "district": "Ahmedabad",
+    "aliases": [
+      { "name": "IIM Ahmedabad", "type": "ABBREVIATION" },
+      { "name": "IIMA", "type": "ABBREVIATION" }
+    ]
+  }
+]

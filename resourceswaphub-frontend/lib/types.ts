@@ -240,3 +240,134 @@ export interface Institution {
   source: string;
   verificationStatus: string;
 }
+
+export interface InstitutionFilters {
+  states: string[];
+  types: string[];
+}
+
+/** Per-record visibility for normalized profile entries. */
+export type RecordVisibility = "PRIVATE" | "PLATFORM_USERS" | "PUBLIC";
+
+export type EducationLevel =
+  | "SCHOOL"
+  | "HIGHER_SECONDARY"
+  | "DIPLOMA"
+  | "UNDERGRADUATE"
+  | "POSTGRADUATE"
+  | "DOCTORATE"
+  | "OTHER";
+
+export type EducationStatus = "CURRENT" | "COMPLETED" | "PAUSED" | "DISCONTINUED";
+
+export interface Education {
+  id: string;
+  institutionId?: string | null;
+  institutionName?: string | null;
+  institutionNameManual?: string | null;
+  educationLevel?: string | null;
+  degree?: string | null;
+  course?: string | null;
+  branchSpecialization?: string | null;
+  department?: string | null;
+  schoolBoard?: string | null;
+  grade?: string | null;
+  academicStream?: string | null;
+  startYear?: number | null;
+  endYear?: number | null;
+  currentYear?: string | null;
+  currentSemester?: string | null;
+  expectedCompletionYear?: number | null;
+  academicSession?: string | null;
+  educationStatus?: string | null;
+  current: boolean;
+  primary: boolean;
+  gradePercentage?: number | null;
+  visibility?: RecordVisibility | null;
+  description?: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+/** POST/PATCH payload for an education record (all fields optional). */
+export type EducationInput = Partial<
+  Omit<Education, "id" | "institutionName" | "current" | "primary" | "createdAt" | "updatedAt">
+> & {
+  institutionId?: string | null;
+  current?: boolean | null;
+  primary?: boolean | null;
+};
+
+export type EmploymentType =
+  | "FULL_TIME"
+  | "PART_TIME"
+  | "INTERNSHIP"
+  | "CONTRACT"
+  | "FREELANCE"
+  | "SELF_EMPLOYED"
+  | "OTHER";
+
+export interface Employment {
+  id: string;
+  companyName?: string | null;
+  designation?: string | null;
+  industry?: string | null;
+  employmentType?: string | null;
+  workCity?: string | null;
+  workState?: string | null;
+  startDate?: string | null;
+  endDate?: string | null;
+  current: boolean;
+  visibility?: RecordVisibility | null;
+  description?: string | null;
+  skillsUsed?: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export type EmploymentInput = Partial<
+  Omit<Employment, "id" | "current" | "createdAt" | "updatedAt">
+> & { current?: boolean | null };
+
+export type TopicType =
+  | "SKILL"
+  | "SUBJECT"
+  | "TECHNOLOGY"
+  | "INTEREST"
+  | "EXPERTISE"
+  | "LEARNING_GOAL"
+  | "EXAM";
+
+export type TopicRelationType =
+  | "INTERESTED_IN"
+  | "LEARNING"
+  | "CAN_HELP_WITH"
+  | "EXPERIENCED_IN";
+
+export type Proficiency = "BEGINNER" | "INTERMEDIATE" | "ADVANCED" | "EXPERT";
+
+export interface Topic {
+  id: string;
+  canonicalName: string;
+  topicType: string;
+}
+
+export interface UserTopic {
+  id: string;
+  topicId: string;
+  canonicalName: string;
+  topicType: string;
+  relationType: TopicRelationType;
+  proficiency?: Proficiency | null;
+  visibility?: RecordVisibility | null;
+}
+
+/** One item in the full-replacement PUT /profile/me/topics payload. */
+export interface UserTopicInput {
+  topicName?: string | null;
+  topicId?: string | null;
+  topicType?: string | null;
+  relationType: TopicRelationType;
+  proficiency?: Proficiency | null;
+  visibility?: RecordVisibility | null;
+}

@@ -25,17 +25,19 @@ public class ProfileController {
 
     @GetMapping("/me")
     public ApiResponse<ExtendedProfileDto> me() {
-        return ApiResponse.ok(profileService.getProfile(SecurityUtils.currentUserId()));
+        UUID userId = SecurityUtils.currentUserId();
+        return ApiResponse.ok(profileService.getProfile(userId, userId));
     }
 
     @PutMapping("/me")
     public ApiResponse<ExtendedProfileDto> update(@Valid @RequestBody ExtendedProfileUpdateRequest request) {
-        return ApiResponse.ok(profileService.updateProfile(SecurityUtils.currentUserId(), request));
+        UUID userId = SecurityUtils.currentUserId();
+        return ApiResponse.ok(profileService.updateProfile(userId, request));
     }
 
     @GetMapping("/{userId}")
     public ApiResponse<ExtendedProfileDto> get(@PathVariable UUID userId) {
-        // Respect privacy - basic implementation
-        return ApiResponse.ok(profileService.getProfile(userId));
+        // Privacy: other users only ever receive the minimal public identity card.
+        return ApiResponse.ok(profileService.getProfile(SecurityUtils.currentUserId(), userId));
     }
 }

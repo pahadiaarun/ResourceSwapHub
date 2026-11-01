@@ -115,4 +115,39 @@ public record ExtendedProfileDto(
                 user.getOtherCanContribute()
         );
     }
+
+    /**
+     * The only view of a profile exposed to other users: a minimal public identity card.
+     * Email, location, and every role-specific wide column are withheld — they have no
+     * per-field visibility and must never be auto-displayed (brief Part 10 §23). Sharing
+     * of education/employment/topics happens through their own visibility-gated endpoints.
+     */
+    public static ExtendedProfileDto publicView(User user) {
+        return new ExtendedProfileDto(
+                user.getId(),                 // id
+                user.getDisplayName(),        // name
+                null,                         // email — never exposed to others
+                user.getAvatarUrl(),          // avatarUrl
+                null,                         // bio
+                null,                         // city
+                null,                         // locality
+                null,                         // state
+                null,                         // country
+                null,                         // preferredLanguage
+                null,                         // profileVisibility
+                null,                         // userType
+                false,                        // profileComplete
+                false,                        // profileCompletedExtended
+                // school (9)
+                null, null, null, null, null, null, null, null, null,
+                // college (10)
+                null, null, null, null, null, null, null, null, null, null,
+                // professional (7)
+                null, null, null, null, null, null, null,
+                // teacher (7)
+                null, null, null, null, null, null, null,
+                // other (3)
+                null, null, null
+        );
+    }
 }

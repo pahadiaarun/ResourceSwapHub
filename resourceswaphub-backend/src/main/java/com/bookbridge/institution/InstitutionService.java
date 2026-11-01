@@ -1,9 +1,9 @@
 package com.bookbridge.institution;
 
 import java.text.Normalizer;
+import java.util.List;
 import java.util.UUID;
 
-import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -24,14 +24,27 @@ public class InstitutionService {
 
     @Transactional(readOnly = true)
     public PageResponse<InstitutionDto> search(String q, String type, String state, String city, Pageable pageable) {
-        String query = q == null ? "" : q.trim();
-        Page<Institution> page;
-        if ((type != null && !type.isBlank()) || (state != null && !state.isBlank()) || (city != null && !city.isBlank())) {
-            page = institutionRepository.searchWithFilters(query, type, state, city, pageable);
-        } else {
-            page = institutionRepository.search(query, pageable);
-        }
-        return PageResponse.from(page.map(InstitutionDto::from));
+        String query = normalize(q);
+        String typeFilter = blankToNull(type);
+        String stateFilter = blankToNull(state);
+        String cityFilter = blankToNull(city);
+        int page = Math.max(pageable.getPageNumber(), 0);
+        int size = pageable.getPageSize() <= 0 ? 20 : Math.min(pageable.getPageSize(), 50);
+
+        List<InstitutionDto> content = institutionRepository
+                .searchRanked(query, typeFilter, stateFilter, cityFilter, size, page * size)
+                .stream()
+                .map(InstitutionDto::from)
+                .toList();
+        long total = institutionRepository.countSearch(query, typeFilter, stateFilter, cityFilter);
+        int totalPages = (int) Math.ceil((double) total / size);
+        boolean hasNext = page + 1 < totalPages;
+        return new PageResponse<>(content, page, size, total, totalPages, hasNext);
+    }
+
+    @Transactional(readOnly = true)
+    public InstitutionFiltersDto filters() {
+        return new InstitutionFiltersDto(institutionRepository.distinctStates(), institutionRepository.distinctTypes());
     }
 
     @Transactional(readOnly = true)
@@ -64,5 +77,9 @@ public class InstitutionService {
                 .replaceAll("\\s+", " ")
                 .trim();
         return normalized;
+    }
+
+    private static String blankToNull(String value) {
+        return value == null || value.isBlank() ? null : value.trim();
     }
 }

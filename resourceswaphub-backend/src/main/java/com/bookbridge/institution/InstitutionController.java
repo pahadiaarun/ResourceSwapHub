@@ -41,6 +41,11 @@ public class InstitutionController {
         return ApiResponse.ok(institutionService.get(id));
     }
 
+    @GetMapping("/filters")
+    public ApiResponse<InstitutionFiltersDto> filters() {
+        return ApiResponse.ok(institutionService.filters());
+    }
+
     @PostMapping("/suggestions")
     public ApiResponse<InstitutionSuggestion> suggest(@Valid @RequestBody InstitutionSuggestionRequest request) {
         UUID userId = SecurityUtils.currentUserId();

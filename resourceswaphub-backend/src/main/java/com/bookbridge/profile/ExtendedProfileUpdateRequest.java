@@ -1,5 +1,6 @@
 package com.bookbridge.profile;
 
+import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 
 public record ExtendedProfileUpdateRequest(
@@ -7,7 +8,11 @@ public record ExtendedProfileUpdateRequest(
         @Size(max = 80) String state,
         @Size(max = 80) String country,
         @Size(max = 10) String preferredLanguage,
+        @Pattern(regexp = "PUBLIC|PRIVATE|CONNECTIONS_ONLY",
+                message = "profileVisibility must be one of PUBLIC, PRIVATE, CONNECTIONS_ONLY")
         String profileVisibility,
+        @Pattern(regexp = "SCHOOL_STUDENT|COLLEGE_STUDENT|WORKING_PROFESSIONAL|TEACHER_EDUCATOR|OTHER",
+                message = "userType must be one of SCHOOL_STUDENT, COLLEGE_STUDENT, WORKING_PROFESSIONAL, TEACHER_EDUCATOR, OTHER")
         String userType,
         // School student fields
         @Size(max = 200) String schoolName,
@@ -16,6 +21,8 @@ public record ExtendedProfileUpdateRequest(
         @Size(max = 80) String schoolLocationDistrict,
         @Size(max = 20) String schoolClass,
         @Size(max = 50) String schoolStream,
+        @Pattern(regexp = "CBSE|ICSE|STATE_BOARD|IB|CAMBRIDGE|OTHER",
+                message = "schoolBoard must be one of CBSE, ICSE, STATE_BOARD, IB, CAMBRIDGE, OTHER")
         String schoolBoard,
         @Size(max = 20) String schoolAcademicYear,
         Integer schoolExpectedGraduationYear,

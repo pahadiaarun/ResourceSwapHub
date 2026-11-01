@@ -18,10 +18,11 @@ public class ExtendedProfileService {
     }
 
     @Transactional(readOnly = true)
-    public ExtendedProfileDto getProfile(UUID userId) {
-        User user = userRepository.findById(userId)
+    public ExtendedProfileDto getProfile(UUID viewerId, UUID ownerId) {
+        User user = userRepository.findById(ownerId)
                 .orElseThrow(() -> ApiException.notFound("User not found"));
-        return ExtendedProfileDto.from(user);
+        boolean isOwner = viewerId != null && viewerId.equals(ownerId);
+        return isOwner ? ExtendedProfileDto.from(user) : ExtendedProfileDto.publicView(user);
     }
 
     @Transactional

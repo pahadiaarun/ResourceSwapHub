@@ -55,6 +55,10 @@ final class ApiClient {
         return send("PATCH", path, toJson(body), token, null);
     }
 
+    ApiCall put(String path, Object body, String token) {
+        return send("PUT", path, toJson(body), token, null);
+    }
+
     ApiCall delete(String path, String token) {
         return send("DELETE", path, null, token, null);
     }
