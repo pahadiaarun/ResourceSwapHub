@@ -35,7 +35,7 @@ db-seed:
 
 .PHONY: api
 api:
-	cd "ResourceSwapHub Backend" && ./mvnw spring-boot:run
+	cd "ResourceSwapHub Backend" && if [ -f .env ]; then set -a; . ./.env; set +a; fi && ./mvnw spring-boot:run
 
 .PHONY: web
 web:
