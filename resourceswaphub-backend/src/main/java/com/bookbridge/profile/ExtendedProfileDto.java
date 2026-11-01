@@ -2,6 +2,7 @@ package com.bookbridge.profile;
 
 import java.util.UUID;
 
+import com.bookbridge.location.LocationDto;
 import com.bookbridge.user.User;
 
 public record ExtendedProfileDto(
@@ -14,6 +15,7 @@ public record ExtendedProfileDto(
         String locality,
         String state,
         String country,
+        LocationDto location,
         String preferredLanguage,
         String profileVisibility,
         String userType,
@@ -72,6 +74,8 @@ public record ExtendedProfileDto(
                 user.getLocality(),
                 user.getState(),
                 user.getCountry(),
+                new LocationDto(user.getCountryId(), user.getStateId(), user.getCityId(),
+                        user.getCountry(), user.getState(), user.getCity()),
                 user.getPreferredLanguage(),
                 user.getProfileVisibility(),
                 user.getUserType(),
@@ -133,6 +137,7 @@ public record ExtendedProfileDto(
                 null,                         // locality
                 null,                         // state
                 null,                         // country
+                null,                         // location
                 null,                         // preferredLanguage
                 null,                         // profileVisibility
                 null,                         // userType

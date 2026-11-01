@@ -6,6 +6,11 @@ import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import {
+  LocationSelector,
+  locationFromInfo,
+  type LocationValue,
+} from "@/components/location-select";
 import { apiClient, errorMessage } from "@/lib/api";
 import { InstitutionSearch } from "./institution-search";
 
@@ -42,6 +47,28 @@ export function ExtendedProfileForm() {
     setFormData((prev) => ({ ...prev, [key]: value }));
   }
 
+  /** Unsaved edits win over the stored directory ids. */
+  function locationDraft(): LocationValue {
+    const saved = locationFromInfo(profile?.location);
+    const pick = (key: "countryId" | "stateId" | "cityId") =>
+      formData[key] === undefined ? saved[key] : (formData[key] as string | null);
+    return {
+      ...saved,
+      countryId: pick("countryId"),
+      stateId: pick("stateId"),
+      cityId: pick("cityId"),
+    };
+  }
+
+  function handleLocationChange(next: LocationValue) {
+    setFormData((prev) => ({
+      ...prev,
+      countryId: next.countryId ?? null,
+      stateId: next.stateId ?? null,
+      cityId: next.cityId ?? null,
+    }));
+  }
+
   function handleSubmit() {
     updateProfile.mutate(formData);
   }
@@ -71,23 +98,18 @@ export function ExtendedProfileForm() {
               onChange={(e) => handleChange("bio", e.target.value)}
             />
           </div>
-          <div className="grid gap-4 sm:grid-cols-2">
-            <div>
-              <label className="mb-1.5 block text-sm font-medium">State</label>
-              <Input
-                defaultValue={profile?.state || ""}
-                onChange={(e) => handleChange("state", e.target.value)}
-                className="h-11 rounded-xl"
-              />
-            </div>
-            <div>
-              <label className="mb-1.5 block text-sm font-medium">Country</label>
-              <Input
-                defaultValue={profile?.country || "India"}
-                onChange={(e) => handleChange("country", e.target.value)}
-                className="h-11 rounded-xl"
-              />
-            </div>
+          <div>
+            <label className="mb-1.5 block text-sm font-medium">Where you are</label>
+            <LocationSelector
+              id="extended-location"
+              value={locationDraft()}
+              onChange={handleLocationChange}
+              autoDefaultCountry
+            />
+            <p className="mt-2 text-xs text-muted-foreground">
+              Choose from the standardized list so readers in the same city find
+              each other. Only city and state are shown publicly.
+            </p>
           </div>
         </div>
       </div>

@@ -6,6 +6,7 @@ import java.util.UUID;
 
 import com.bookbridge.listing.ListingDto;
 import com.bookbridge.listing.SellerDto;
+import com.bookbridge.location.LocationDto;
 
 public record CollectionDetailDto(
         UUID id,
@@ -13,6 +14,7 @@ public record CollectionDetailDto(
         String description,
         String city,
         String locality,
+        LocationDto location,
         SellerDto owner,
         long itemCount,
         long availableCount,

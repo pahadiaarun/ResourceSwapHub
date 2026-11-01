@@ -45,7 +45,8 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/api/v1/media/**").permitAll()
                         // Browsing is open to guests; every write still requires a signed-in owner.
                         .requestMatchers(HttpMethod.GET, "/api/v1/discovery/**", "/api/v1/listings/**",
-                                "/api/v1/collections/**", "/api/v1/catalog/**", "/api/v1/institutions/**").permitAll()
+                                "/api/v1/collections/**", "/api/v1/catalog/**", "/api/v1/institutions/**",
+                                "/api/v1/locations/**").permitAll()
                         .requestMatchers("/ws/**").permitAll()
                         .requestMatchers("/actuator/health", "/actuator/info").permitAll()
                         .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()

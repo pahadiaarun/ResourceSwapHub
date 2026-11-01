@@ -7,6 +7,50 @@ export type ListingStatus =
   | "WITHDRAWN"
   | "EXCHANGED";
 
+/**
+ * Standardized location resolved from the directory. Nulls are omitted from the
+ * API payload (`non_null` inclusion), so every field is optional here.
+ */
+export interface LocationInfo {
+  countryId?: string | null;
+  stateId?: string | null;
+  cityId?: string | null;
+  countryName?: string | null;
+  stateName?: string | null;
+  cityName?: string | null;
+}
+
+export interface DirectoryCountry {
+  id: string;
+  isoCode: string;
+  name: string;
+}
+
+export interface DirectoryState {
+  id: string;
+  countryId: string;
+  officialCode?: string | null;
+  name: string;
+  stateType?: string | null;
+}
+
+export interface DirectoryDistrict {
+  id: string;
+  stateId: string;
+  officialCode?: string | null;
+  name: string;
+}
+
+export interface DirectoryCity {
+  id: string;
+  name: string;
+  stateId: string;
+  stateName?: string | null;
+  districtId?: string | null;
+  districtName?: string | null;
+  cityType?: string | null;
+}
+
 export interface User {
   id: string;
   name: string;
@@ -14,6 +58,7 @@ export interface User {
   avatarUrl?: string | null;
   city?: string | null;
   locality?: string | null;
+  location?: LocationInfo | null;
   profileComplete: boolean;
   joinedAt?: string;
 }
@@ -64,6 +109,7 @@ export interface Listing {
   price?: number | null;
   city: string;
   locality?: string | null;
+  location?: LocationInfo | null;
   notes?: string | null;
   status: ListingStatus;
   imageUrls: string[];
@@ -77,6 +123,7 @@ export interface CollectionSummary {
   description?: string | null;
   city: string;
   locality?: string | null;
+  location?: LocationInfo | null;
   owner: Seller;
   itemCount: number;
   availableCount: number;
@@ -156,6 +203,9 @@ export interface SearchFilters {
   priceType?: string;
   condition?: string;
   city?: string;
+  stateId?: string;
+  cityId?: string;
+  districtId?: string;
   locality?: string;
   page?: number;
   size?: number;
@@ -180,6 +230,7 @@ export interface ExtendedProfile {
   locality?: string | null;
   state?: string | null;
   country?: string | null;
+  location?: LocationInfo | null;
   preferredLanguage?: string | null;
   profileVisibility?: ProfileVisibility | null;
   userType?: UserType | null;

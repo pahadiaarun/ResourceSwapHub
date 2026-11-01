@@ -18,6 +18,11 @@ import {
 import { Avatar } from "@/components/avatar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import {
+  LocationSelector,
+  locationFromInfo,
+  type LocationValue,
+} from "@/components/location-select";
 import { apiClient, errorMessage } from "@/lib/api";
 import { useAuth } from "@/lib/auth";
 
@@ -27,7 +32,6 @@ const schema = z.object({
     .trim()
     .min(2, "Name must be at least 2 characters")
     .max(80, "Name must be 80 characters or fewer"),
-  city: z.string().trim().max(80, "City is too long"),
   locality: z.string().trim().max(120, "Locality is too long"),
 });
 
@@ -38,24 +42,47 @@ export function ProfileForm() {
   const router = useRouter();
   const fileRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
+  const [location, setLocation] = useState<LocationValue>(() =>
+    locationFromInfo(user?.location)
+  );
+  const placeLabel = [
+    location.cityName ?? user?.city,
+    location.stateName ?? user?.location?.stateName,
+  ]
+    .filter(Boolean)
+    .join(", ");
 
   const form = useForm<Values>({
     resolver: zodResolver(schema),
     defaultValues: {
       name: user?.name ?? "",
-      city: user?.city ?? "",
       locality: user?.locality ?? "",
     },
   });
+
+  /**
+   * Ids are what the directory standardizes on; `city` carries the previous text
+   * through untouched until the picker actually changes it, so saving a name or
+   * photo can never wipe a city the directory has not matched yet.
+   */
+  function locationPayload() {
+    return {
+      countryId: location.countryId ?? null,
+      stateId: location.stateId ?? null,
+      cityId: location.cityId ?? null,
+      city: location.cityName ?? null,
+    };
+  }
 
   async function onSubmit(values: Values) {
     try {
       const updated = await apiClient.updateProfile({
         name: values.name,
-        city: values.city || null,
         locality: values.locality || null,
+        ...locationPayload(),
       });
       setUser(updated);
+      setLocation(locationFromInfo(updated.location));
       toast.success(
         updated.profileComplete
           ? "Profile saved. Your shelf is ready."
@@ -73,11 +100,12 @@ export function ProfileForm() {
       const media = await apiClient.uploadMedia(file, "AVATAR");
       const updated = await apiClient.updateProfile({
         name: form.getValues("name") || user?.name || "ResourceSwapHub reader",
-        city: form.getValues("city") || null,
         locality: form.getValues("locality") || null,
+        ...locationPayload(),
         avatarMediaId: media.id,
       });
       setUser(updated);
+      setLocation(locationFromInfo(updated.location));
       toast.success("Profile photo updated.");
     } catch (error) {
       toast.error(errorMessage(error));
@@ -132,7 +160,7 @@ export function ProfileForm() {
             <p className="mt-1 flex items-center gap-1 text-xs text-muted-foreground">
               <MapPin className="size-3" />
               {user?.locality ? `${user.locality}, ` : ""}
-              {user?.city || "Add your city and locality"}
+              {placeLabel || "Add your city and locality"}
             </p>
           </div>
         </div>
@@ -152,22 +180,26 @@ export function ProfileForm() {
             ) : null}
           </label>
 
-          <label className="flex flex-col gap-1.5">
-            <span className="text-sm font-medium">City</span>
-            <Input
-              {...form.register("city")}
-              className="h-11 rounded-xl"
-              placeholder="Pune"
-              autoComplete="address-level2"
+          <div className="sm:col-span-2">
+            <span className="mb-1.5 block text-sm font-medium">Where you are</span>
+            <LocationSelector
+              id="profile-location"
+              value={location}
+              onChange={setLocation}
+              autoDefaultCountry
+              labels={{
+                country: "Country",
+                state: "State / Union Territory",
+                city: "City / Town",
+              }}
             />
-            {form.formState.errors.city ? (
-              <span className="text-xs text-destructive">
-                {form.formState.errors.city.message}
-              </span>
-            ) : null}
-          </label>
+            <p className="mt-2 text-xs text-muted-foreground">
+              Pick from the list so your location matches other readers in the same
+              city. Selecting a state unlocks its cities.
+            </p>
+          </div>
 
-          <label className="flex flex-col gap-1.5">
+          <label className="flex flex-col gap-1.5 sm:col-span-2">
             <span className="text-sm font-medium">Locality</span>
             <Input
               {...form.register("locality")}
@@ -229,7 +261,7 @@ export function ProfileForm() {
           <ul className="mt-4 flex flex-col gap-2 text-sm">
             {[
               ["Name", Boolean(user?.name)],
-              ["City", Boolean(user?.city)],
+              ["City", Boolean(location.cityId || user?.city)],
               ["Locality", Boolean(user?.locality)],
               ["Profile photo", Boolean(user?.avatarUrl)],
             ].map(([label, done]) => (

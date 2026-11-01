@@ -3,6 +3,10 @@ import type {
   CollectionDetail,
   CollectionSummary,
   Conversation,
+  DirectoryCity,
+  DirectoryCountry,
+  DirectoryDistrict,
+  DirectoryState,
   Education,
   EducationInput,
   Employment,
@@ -207,6 +211,9 @@ export const apiClient = {
     name: string;
     city?: string | null;
     locality?: string | null;
+    countryId?: string | null;
+    stateId?: string | null;
+    cityId?: string | null;
     avatarMediaId?: string | null;
   }) {
     return api<User>("/users/me", { method: "PATCH", body: input });
@@ -325,6 +332,34 @@ unreadCount() {
   },
   getProfile(userId: string) {
     return api<import("./types").ExtendedProfile>(`/profile/${userId}`);
+  },
+
+  // Standardized location directory (country -> state -> district -> city)
+  countries(q?: string) {
+    return api<DirectoryCountry[]>(`/locations/countries${queryString({ q })}`, {
+      auth: false,
+    });
+  },
+  states(countryId: string, q?: string) {
+    return api<DirectoryState[]>(
+      `/locations/states${queryString({ countryId, q })}`,
+      { auth: false }
+    );
+  },
+  districts(stateId: string, q?: string) {
+    return api<DirectoryDistrict[]>(
+      `/locations/districts${queryString({ stateId, q })}`,
+      { auth: false }
+    );
+  },
+  cities(stateId: string, q?: string, page = 0, size = 20) {
+    return api<PageResponse<DirectoryCity>>(
+      `/locations/cities${queryString({ stateId, q, page, size })}`,
+      { auth: false }
+    );
+  },
+  city(id: string) {
+    return api<DirectoryCity>(`/locations/cities/${id}`, { auth: false });
   },
 
   // Institutions

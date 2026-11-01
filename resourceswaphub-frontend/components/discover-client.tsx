@@ -16,11 +16,15 @@ import {
 } from "lucide-react";
 import { EmptyState } from "@/components/empty-state";
 import { ListingCard } from "@/components/listing-card";
+import {
+  LocationSelector,
+  useLocationLabels,
+  type LocationValue,
+} from "@/components/location-select";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { apiClient, errorMessage } from "@/lib/api";
 import type { SearchFilters } from "@/lib/types";
-import { cn } from "@/lib/utils";
 
 const SELECT_CLASS =
   "h-10 w-full appearance-none rounded-xl border border-input bg-card px-3 pr-8 text-sm outline-none transition focus:border-ring focus:ring-3 focus:ring-ring/20";
@@ -33,6 +37,9 @@ const FILTER_KEYS = [
   "priceType",
   "condition",
   "city",
+  "stateId",
+  "cityId",
+  "districtId",
   "locality",
   "page",
 ] as const;
@@ -47,6 +54,23 @@ function readFilters(params: URLSearchParams): SearchFilters {
     }
   }
   return result;
+}
+
+/** Standardized location filters come from the URL as ids only; names are resolved lazily. */
+function readLocation(params: URLSearchParams): LocationValue {
+  return {
+    stateId: params.get("stateId"),
+    cityId: params.get("cityId"),
+    districtId: params.get("districtId"),
+  };
+}
+
+function sameLocationIds(a: LocationValue, b: LocationValue) {
+  return (
+    (a.stateId ?? "") === (b.stateId ?? "") &&
+    (a.cityId ?? "") === (b.cityId ?? "") &&
+    (a.districtId ?? "") === (b.districtId ?? "")
+  );
 }
 
 function SelectField({
@@ -79,12 +103,16 @@ function SelectField({
 
 function FiltersPanel({
   filters,
+  location,
   onChange,
+  onLocationChange,
   onReset,
   taxonomy,
 }: {
   filters: SearchFilters;
+  location: LocationValue;
   onChange: (patch: SearchFilters) => void;
+  onLocationChange: (next: LocationValue) => void;
   onReset: () => void;
   taxonomy?: Awaited<ReturnType<typeof apiClient.taxonomy>>;
 }) {
@@ -152,17 +180,30 @@ function FiltersPanel({
         ))}
       </SelectField>
 
-      <SelectField
-        label="City"
-        value={filters.city}
-        onChange={(value) => onChange({ city: value })}
-      >
-        {(taxonomy?.cities ?? []).map((city) => (
-          <option key={city} value={city}>
-            {city}
-          </option>
-        ))}
-      </SelectField>
+      <div>
+        <span className="mb-1.5 block text-xs font-medium text-muted-foreground">
+          Location
+        </span>
+        <LocationSelector
+          id="discover-location"
+          value={location}
+          onChange={onLocationChange}
+          includeDistrict
+          autoDefaultCountry
+          className="grid-cols-1 sm:grid-cols-1"
+          labels={{
+            country: "Country",
+            state: "State / UT",
+            district: "District",
+            city: "City",
+          }}
+        />
+        {!location.stateId ? (
+          <p className="mt-1.5 text-[11px] text-muted-foreground">
+            Pick a state to unlock its cities.
+          </p>
+        ) : null}
+      </div>
 
       <label className="flex flex-col gap-1.5">
         <span className="text-xs font-medium text-muted-foreground">Locality</span>
@@ -191,6 +232,9 @@ export function DiscoverClient() {
   const [filters, setFilters] = useState<SearchFilters>(() =>
     readFilters(new URLSearchParams(params.toString()))
   );
+  const [location, setLocation] = useState<LocationValue>(() =>
+    readLocation(new URLSearchParams(params.toString()))
+  );
   const [qInput, setQInput] = useState(filters.q ?? "");
   const [mobileOpen, setMobileOpen] = useState(false);
 
@@ -200,10 +244,15 @@ export function DiscoverClient() {
   const [prevParams, setPrevParams] = useState(params);
   if (prevParams !== params) {
     const next = readFilters(new URLSearchParams(params.toString()));
+    const nextLocation = readLocation(new URLSearchParams(params.toString()));
     setPrevParams(params);
     setFilters(next);
     setQInput(next.q ?? "");
+    // Keep locally known names when only this component caused the URL change.
+    setLocation((current) => (sameLocationIds(current, nextLocation) ? current : nextLocation));
   }
+
+  const displayLocation = useLocationLabels(location);
 
   const taxonomy = useQuery({
     queryKey: ["taxonomy"],
@@ -226,6 +275,9 @@ export function DiscoverClient() {
         filters.priceType,
         filters.condition,
         filters.city,
+        filters.stateId,
+        filters.cityId,
+        filters.districtId,
         filters.locality,
       ].filter(Boolean).length,
     [filters]
@@ -248,6 +300,19 @@ export function DiscoverClient() {
     push({ ...filters, ...patch, page: 0 });
   }
 
+  /** Location filters travel as directory ids so same-name cities in different states never collide. */
+  function changeLocation(next: LocationValue) {
+    setLocation(next);
+    push({
+      ...filters,
+      stateId: next.stateId ?? undefined,
+      cityId: next.cityId ?? undefined,
+      districtId: next.districtId ?? undefined,
+      city: undefined,
+      page: 0,
+    });
+  }
+
   function submitSearch(event: React.FormEvent) {
     event.preventDefault();
     change({ q: qInput.trim() });
@@ -255,6 +320,7 @@ export function DiscoverClient() {
 
   function reset() {
     setQInput("");
+    setLocation({ countryId: location.countryId, countryName: location.countryName });
     push({ size: 12, page: 0 });
   }
 
@@ -312,7 +378,9 @@ export function DiscoverClient() {
             </div>
             <FiltersPanel
               filters={filters}
+              location={displayLocation}
               onChange={change}
+              onLocationChange={changeLocation}
               onReset={reset}
               taxonomy={taxonomy.data}
             />
@@ -334,7 +402,9 @@ export function DiscoverClient() {
             </div>
             <FiltersPanel
               filters={filters}
+              location={displayLocation}
               onChange={change}
+              onLocationChange={changeLocation}
               onReset={reset}
               taxonomy={taxonomy.data}
             />

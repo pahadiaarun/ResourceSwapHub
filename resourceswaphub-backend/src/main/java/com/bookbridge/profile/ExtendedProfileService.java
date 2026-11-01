@@ -5,16 +5,23 @@ import java.util.UUID;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.bookbridge.location.LocationService;
 import com.bookbridge.shared.error.ApiException;
 import com.bookbridge.user.User;
 import com.bookbridge.user.UserRepository;
+import com.bookbridge.user.UserService;
 
 @Service
 public class ExtendedProfileService {
     private final UserRepository userRepository;
+    private final UserService userService;
+    private final LocationService locationService;
 
-    public ExtendedProfileService(UserRepository userRepository) {
+    public ExtendedProfileService(UserRepository userRepository, UserService userService,
+                                  LocationService locationService) {
         this.userRepository = userRepository;
+        this.userService = userService;
+        this.locationService = locationService;
     }
 
     @Transactional(readOnly = true)
@@ -31,8 +38,7 @@ public class ExtendedProfileService {
                 .orElseThrow(() -> ApiException.notFound("User not found"));
 
         if (request.bio() != null) user.setBio(request.bio());
-        if (request.state() != null) user.setState(request.state());
-        if (request.country() != null) user.setCountry(request.country());
+        applyLocation(user, request);
         if (request.preferredLanguage() != null) user.setPreferredLanguage(request.preferredLanguage());
         if (request.profileVisibility() != null) user.setProfileVisibility(request.profileVisibility());
         if (request.userType() != null) user.setUserType(request.userType());
@@ -85,5 +91,28 @@ public class ExtendedProfileService {
 
         user.setProfileCompletedExtended(true);
         return ExtendedProfileDto.from(userRepository.save(user));
+    }
+
+    /**
+     * The location fields are partial like the rest of this request: untouched means unchanged, and
+     * a typed value that matches the directory is upgraded to the standardized ids.
+     */
+    private void applyLocation(User user, ExtendedProfileUpdateRequest request) {
+        boolean untouched = request.countryId() == null && request.stateId() == null && request.cityId() == null
+                && request.state() == null && request.country() == null;
+        if (untouched) {
+            return;
+        }
+        String stateText = request.state() != null ? request.state() : user.getState();
+        String countryText = request.country() != null ? request.country() : user.getCountry();
+        LocationService.ResolvedLocation location = locationService.resolve(request.countryId(),
+                request.stateId(), request.cityId(), user.getCity(), stateText, countryText);
+        userService.applyLocation(user, location);
+        if (location.stateId() == null && request.state() != null) {
+            user.setState(request.state());
+        }
+        if (location.countryId() == null && request.country() != null) {
+            user.setCountry(request.country());
+        }
     }
 }

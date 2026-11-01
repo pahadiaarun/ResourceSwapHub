@@ -1,6 +1,8 @@
 package com.bookbridge.discovery;
 
 import java.util.Locale;
+import java.util.UUID;
+import java.util.function.Consumer;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -14,16 +16,20 @@ import com.bookbridge.listing.ListingDto;
 import com.bookbridge.listing.ListingMapper;
 import com.bookbridge.listing.ListingRepository;
 import com.bookbridge.listing.PriceType;
+import com.bookbridge.location.LocationService;
 import com.bookbridge.shared.error.ApiException;
 
 @Service
 public class DiscoveryService {
     private final ListingRepository listingRepository;
     private final ListingMapper listingMapper;
+    private final LocationService locationService;
 
-    public DiscoveryService(ListingRepository listingRepository, ListingMapper listingMapper) {
+    public DiscoveryService(ListingRepository listingRepository, ListingMapper listingMapper,
+                            LocationService locationService) {
         this.listingRepository = listingRepository;
         this.listingMapper = listingMapper;
+        this.locationService = locationService;
     }
 
     @Transactional(readOnly = true)
@@ -51,12 +57,23 @@ public class DiscoveryService {
                 priceType,
                 condition,
                 city,
+                validated(query.stateId(), locationService::requireState),
+                validated(query.cityId(), locationService::requireCity),
+                validated(query.districtId(), locationService::requireDistrict),
                 locality,
                 PageRequest.of(page, size)
         );
-        return results.map(listingMapper::toDto);
+        LocationService.LocationIndex index = listingMapper.indexFor(results.getContent());
+        return results.map(listing -> listingMapper.toDto(listing, index));
     }
 
+    /** Rejects an unknown location id with the same error the directory API gives, instead of an empty page. */
+    private UUID validated(UUID id, Consumer<UUID> require) {
+        if (id != null) {
+            require.accept(id);
+        }
+        return id;
+    }
     private String prefixTsQuery(String value) {
         String[] tokens = value.toLowerCase(Locale.ROOT)
                 .replaceAll("[^\\p{L}\\p{N}\\s]", " ")
@@ -110,6 +127,9 @@ public class DiscoveryService {
             PriceType priceType,
             BookCondition condition,
             String city,
+            UUID stateId,
+            UUID cityId,
+            UUID districtId,
             String locality,
             int page,
             int size

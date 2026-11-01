@@ -2,12 +2,18 @@
 
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
+import { useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { toast } from "sonner";
 import { ArrowLeft, Layers, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import {
+  LocationSelector,
+  locationFromInfo,
+  type LocationValue,
+} from "@/components/location-select";
 import { apiClient, errorMessage } from "@/lib/api";
 import { useAuth } from "@/lib/auth";
 import type { CollectionDetail } from "@/lib/types";
@@ -22,7 +28,6 @@ const schema = z.object({
     .string()
     .trim()
     .max(1000, "Description must be 1000 characters or fewer"),
-  city: z.string().trim().min(1, "City is required").max(80, "City is too long"),
   locality: z.string().trim().max(120, "Locality is too long"),
 });
 
@@ -35,27 +40,42 @@ export function CollectionForm({
 }) {
   const router = useRouter();
   const { user } = useAuth();
+  const [location, setLocation] = useState<LocationValue>(() => {
+    const fromCollection = locationFromInfo(collection?.location);
+    return fromCollection.countryId || fromCollection.stateId || fromCollection.cityId
+      ? fromCollection
+      : locationFromInfo(user?.location);
+  });
+  const [locationError, setLocationError] = useState<string | null>(null);
+
   const form = useForm<Values>({
     resolver: zodResolver(schema),
     defaultValues: {
       title: collection?.title ?? "",
       description: collection?.description ?? "",
-      city: collection?.city ?? user?.city ?? "",
       locality: collection?.locality ?? user?.locality ?? "",
     },
   });
 
   async function onSubmit(values: Values) {
+    if (!location.cityId) {
+      setLocationError("Choose the city where this set is available.");
+      toast.error("Select a city from the list.");
+      return;
+    }
     try {
       const payload = {
         title: values.title,
         description: values.description || null,
-        city: values.city,
+        countryId: location.countryId ?? null,
+        stateId: location.stateId ?? null,
+        cityId: location.cityId ?? null,
         locality: values.locality || null,
       };
       const saved = collection
         ? await apiClient.updateCollection(collection.id, payload)
         : await apiClient.createCollection(payload);
+      setLocationError(null);
       toast.success(collection ? "Collection updated." : "Collection created.");
       router.push(`/collections/${saved.id}`);
     } catch (error) {
@@ -118,25 +138,35 @@ export function CollectionForm({
             ) : null}
           </label>
 
-          <div className="grid gap-4 sm:grid-cols-2">
-            <label className="flex flex-col gap-1.5">
-              <span className="text-sm font-medium">City</span>
-              <Input {...form.register("city")} placeholder="Pune" className="h-11 rounded-xl" />
-              {form.formState.errors.city ? (
-                <span className="text-xs text-destructive">
-                  {form.formState.errors.city.message}
-                </span>
-              ) : null}
-            </label>
-            <label className="flex flex-col gap-1.5">
-              <span className="text-sm font-medium">Locality</span>
-              <Input
-                {...form.register("locality")}
-                placeholder="Kothrud"
-                className="h-11 rounded-xl"
-              />
-            </label>
+          <div>
+            <span className="mb-1.5 block text-sm font-medium">Availability location</span>
+            <LocationSelector
+              id="collection-location"
+              value={location}
+              onChange={(next) => {
+                setLocation(next);
+                if (next.cityId) setLocationError(null);
+              }}
+              autoDefaultCountry
+              labels={{ country: "Country", state: "State", city: "City" }}
+            />
+            {locationError ? (
+              <span className="mt-1.5 block text-xs text-destructive">{locationError}</span>
+            ) : (
+              <span className="mt-1.5 block text-[11px] text-muted-foreground">
+                City and state are public; the locality stays a rough pickup hint.
+              </span>
+            )}
           </div>
+
+          <label className="flex flex-col gap-1.5">
+            <span className="text-sm font-medium">Locality</span>
+            <Input
+              {...form.register("locality")}
+              placeholder="Kothrud"
+              className="h-11 rounded-xl"
+            />
+          </label>
         </div>
 
         <div className="mt-6 flex justify-end border-t border-border pt-4">

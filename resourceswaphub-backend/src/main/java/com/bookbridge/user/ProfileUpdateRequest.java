@@ -14,6 +14,9 @@ public record ProfileUpdateRequest(
         String city,
         @Size(max = 120, message = "Locality must be 120 characters or fewer")
         String locality,
+        UUID countryId,
+        UUID stateId,
+        UUID cityId,
         UUID avatarMediaId
 ) {
 }

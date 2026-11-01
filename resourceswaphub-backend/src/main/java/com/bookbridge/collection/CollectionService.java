@@ -15,6 +15,8 @@ import com.bookbridge.listing.ListingMapper;
 import com.bookbridge.listing.ListingRepository;
 import com.bookbridge.listing.ListingStatus;
 import com.bookbridge.listing.SellerDto;
+import com.bookbridge.location.LocationDto;
+import com.bookbridge.location.LocationService;
 import com.bookbridge.shared.error.ApiException;
 import com.bookbridge.user.User;
 import com.bookbridge.user.UserService;
@@ -25,13 +27,16 @@ public class CollectionService {
     private final ListingRepository listingRepository;
     private final ListingMapper listingMapper;
     private final UserService userService;
+    private final LocationService locationService;
 
     public CollectionService(CollectionRepository collectionRepository, ListingRepository listingRepository,
-                            ListingMapper listingMapper, UserService userService) {
+                            ListingMapper listingMapper, UserService userService,
+                            LocationService locationService) {
         this.collectionRepository = collectionRepository;
         this.listingRepository = listingRepository;
         this.listingMapper = listingMapper;
         this.userService = userService;
+        this.locationService = locationService;
     }
 
     @Transactional
@@ -43,7 +48,8 @@ public class CollectionService {
         }
         Collection collection = new Collection();
         collection.setOwner(owner);
-        apply(collection, request.title(), request.description(), request.city(), request.locality());
+        applyFields(collection, request.title(), request.description(), request.locality(),
+                location(request.countryId(), request.stateId(), request.cityId(), request.city(), owner));
         collectionRepository.saveAndFlush(collection);
         return detail(collection, owner.getId());
     }
@@ -55,7 +61,9 @@ public class CollectionService {
         if (!collection.getOwner().getId().equals(userId)) {
             throw ApiException.notFound("That collection could not be found.");
         }
-        apply(collection, request.title(), request.description(), request.city(), request.locality());
+        applyFields(collection, request.title(), request.description(), request.locality(),
+                location(request.countryId(), request.stateId(), request.cityId(), request.city(),
+                        collection.getOwner()));
         collectionRepository.saveAndFlush(collection);
         return detail(collection, userId);
     }
@@ -70,8 +78,20 @@ public class CollectionService {
     @Transactional(readOnly = true)
     public Page<CollectionSummaryDto> mine(UUID userId, int page, int size) {
         Pageable pageable = PageRequest.of(Math.max(0, page), Math.max(1, Math.min(size, 48)));
-        return collectionRepository.findByOwnerIdOrderByCreatedAtDesc(userId, pageable)
-                .map(collection -> summary(collection, userId));
+        Page<Collection> result = collectionRepository.findByOwnerIdOrderByCreatedAtDesc(userId, pageable);
+        LocationService.LocationIndex index = locationService.index(
+                result.getContent().stream().map(Collection::getCountryId).toList(),
+                result.getContent().stream().map(Collection::getStateId).toList(),
+                result.getContent().stream().map(Collection::getCityId).toList());
+        return result.map(collection -> summary(collection, userId, index));
+    }
+
+    /** A collection with no location of its own inherits the owner's pickup area. */
+    private LocationService.ResolvedLocation location(UUID countryId, UUID stateId, UUID cityId,
+                                                     String cityText, User owner) {
+        return locationService.resolve(countryId, stateId, cityId,
+                cityText != null && !cityText.isBlank() ? cityText : owner.getCity(),
+                owner.getState(), owner.getCountry());
     }
 
     private CollectionDetailDto detail(Collection collection, UUID viewerId) {
@@ -80,7 +100,7 @@ public class CollectionService {
         List<Listing> visible = all.stream()
                 .filter(listing -> owner || listing.getStatus() != ListingStatus.WITHDRAWN)
                 .toList();
-        List<ListingDto> items = visible.stream().map(listingMapper::toDto).toList();
+        List<ListingDto> items = listingMapper.toDtoList(visible);
         long available = visible.stream().filter(l -> l.getStatus() == ListingStatus.AVAILABLE).count();
         String cover = firstImage(visible);
         return new CollectionDetailDto(
@@ -89,6 +109,7 @@ public class CollectionService {
                 collection.getDescription(),
                 collection.getCity(),
                 collection.getLocality(),
+                describe(collection),
                 SellerDto.from(collection.getOwner()),
                 visible.size(),
                 available,
@@ -98,7 +119,8 @@ public class CollectionService {
         );
     }
 
-    private CollectionSummaryDto summary(Collection collection, UUID viewerId) {
+    private CollectionSummaryDto summary(Collection collection, UUID viewerId,
+                                        LocationService.LocationIndex index) {
         List<Listing> visible = listingRepository.findByCollectionIdOrderByCreatedAtDesc(collection.getId()).stream()
                 .filter(listing -> collection.getOwner().getId().equals(viewerId)
                         || listing.getStatus() != ListingStatus.WITHDRAWN)
@@ -110,12 +132,17 @@ public class CollectionService {
                 collection.getDescription(),
                 collection.getCity(),
                 collection.getLocality(),
+                index.of(collection.getCountryId(), collection.getStateId(), collection.getCityId()),
                 SellerDto.from(collection.getOwner()),
                 visible.size(),
                 available,
                 firstImage(visible),
                 collection.getCreatedAt()
         );
+    }
+
+    private LocationDto describe(Collection collection) {
+        return locationService.describe(collection.getCountryId(), collection.getStateId(), collection.getCityId());
     }
 
     private String firstImage(List<Listing> listings) {
@@ -126,11 +153,18 @@ public class CollectionService {
                 .orElse(null);
     }
 
-    private void apply(Collection collection, String title, String description, String city, String locality) {
+    private void applyFields(Collection collection, String title, String description, String locality,
+                             LocationService.ResolvedLocation location) {
         collection.setTitle(title.trim());
         collection.setDescription(trimToNull(description));
-        collection.setCity(city.trim());
+        if (location.cityName() == null) {
+            throw ApiException.badRequest("CITY_REQUIRED", "Choose the city where the handover happens.");
+        }
+        collection.setCity(location.cityName());
         collection.setLocality(trimToNull(locality));
+        collection.setCountryId(location.countryId());
+        collection.setStateId(location.stateId());
+        collection.setCityId(location.cityId());
     }
 
     private String trimToNull(String value) {

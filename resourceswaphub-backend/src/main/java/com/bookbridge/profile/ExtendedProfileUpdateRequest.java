@@ -1,5 +1,7 @@
 package com.bookbridge.profile;
 
+import java.util.UUID;
+
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 
@@ -7,6 +9,9 @@ public record ExtendedProfileUpdateRequest(
         @Size(max = 500) String bio,
         @Size(max = 80) String state,
         @Size(max = 80) String country,
+        UUID countryId,
+        UUID stateId,
+        UUID cityId,
         @Size(max = 10) String preferredLanguage,
         @Pattern(regexp = "PUBLIC|PRIVATE|CONNECTIONS_ONLY",
                 message = "profileVisibility must be one of PUBLIC, PRIVATE, CONNECTIONS_ONLY")

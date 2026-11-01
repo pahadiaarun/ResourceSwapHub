@@ -72,6 +72,16 @@ public class Listing {
     @Column(length = 120)
     private String locality;
 
+    // Standardized location; `city` above mirrors cityId's canonical name for pre-directory clients.
+    @Column(name = "country_id")
+    private UUID countryId;
+
+    @Column(name = "state_id")
+    private UUID stateId;
+
+    @Column(name = "city_id")
+    private UUID cityId;
+
     @Column(length = 2000)
     private String notes;
 

@@ -18,6 +18,7 @@ import com.bookbridge.catalog.Book;
 import com.bookbridge.catalog.BookRepository;
 import com.bookbridge.collection.Collection;
 import com.bookbridge.collection.CollectionRepository;
+import com.bookbridge.location.LocationService;
 import com.bookbridge.shared.error.ApiException;
 import com.bookbridge.shared.media.MediaAsset;
 import com.bookbridge.shared.media.MediaPurpose;
@@ -33,17 +34,20 @@ public class ListingService {
     private final CollectionRepository collectionRepository;
     private final MediaService mediaService;
     private final UserService userService;
+    private final LocationService locationService;
     private final ListingMapper mapper;
 
     public ListingService(ListingRepository listingRepository, ListingImageRepository listingImageRepository,
                           BookRepository bookRepository, CollectionRepository collectionRepository,
-                          MediaService mediaService, UserService userService, ListingMapper mapper) {
+                          MediaService mediaService, UserService userService, LocationService locationService,
+                          ListingMapper mapper) {
         this.listingRepository = listingRepository;
         this.listingImageRepository = listingImageRepository;
         this.bookRepository = bookRepository;
         this.collectionRepository = collectionRepository;
         this.mediaService = mediaService;
         this.userService = userService;
+        this.locationService = locationService;
         this.mapper = mapper;
     }
 
@@ -63,7 +67,8 @@ public class ListingService {
         listing.setBook(book);
         listing.setCollection(collection);
         applyFields(listing, request.condition(), request.priceType(), request.price(),
-                request.city(), request.locality(), request.notes());
+                request.locality(), request.notes(), location(request.countryId(), request.stateId(),
+                        request.cityId(), request.city(), owner));
         attachImages(listing, request.imageIds(), userId, false);
         listing.setStatus(ListingStatus.AVAILABLE);
         listingRepository.saveAndFlush(listing);
@@ -74,7 +79,8 @@ public class ListingService {
     public ListingDto update(UUID userId, UUID listingId, ListingUpdateRequest request) {
         Listing listing = ownedListing(listingId, userId);
         applyFields(listing, request.condition(), request.priceType(), request.price(),
-                request.city(), request.locality(), request.notes());
+                request.locality(), request.notes(), location(request.countryId(), request.stateId(),
+                        request.cityId(), request.city(), listing.getOwner()));
         if (request.imageIds() != null) {
             listing.getImages().clear();
             listingImageRepository.flush();
@@ -113,7 +119,8 @@ public class ListingService {
         Page<Listing> result = status == null
                 ? listingRepository.findByOwnerId(userId, pageable)
                 : listingRepository.findByOwnerIdAndStatus(userId, status, pageable);
-        return result.map(mapper::toDto);
+        LocationService.LocationIndex index = mapper.indexFor(result.getContent());
+        return result.map(listing -> mapper.toDto(listing, index));
     }
 
     @Transactional(readOnly = true)
@@ -121,10 +128,9 @@ public class ListingService {
         Collection collection = collectionRepository.findWithOwnerById(collectionId)
                 .orElseThrow(() -> ApiException.notFound("That collection could not be found."));
         boolean owner = collection.getOwner().getId().equals(viewerId);
-        return listingRepository.findByCollectionIdOrderByCreatedAtDesc(collectionId).stream()
+        return mapper.toDtoList(listingRepository.findByCollectionIdOrderByCreatedAtDesc(collectionId).stream()
                 .filter(listing -> owner || listing.getStatus() != ListingStatus.WITHDRAWN)
-                .map(mapper::toDto)
-                .toList();
+                .toList());
     }
 
     @Transactional
@@ -158,14 +164,29 @@ public class ListingService {
         return collection;
     }
 
+    private LocationService.ResolvedLocation location(UUID countryId, UUID stateId, UUID cityId,
+                                                      String cityText, User owner) {
+        // A listing with no location of its own falls back to the seller's pickup area.
+        return locationService.resolve(countryId, stateId, cityId,
+                cityText != null && !cityText.isBlank() ? cityText : owner.getCity(),
+                owner.getState(), owner.getCountry());
+    }
+
     private void applyFields(Listing listing, BookCondition condition, PriceType priceType,
-                             BigDecimal price, String city, String locality, String notes) {
+                             BigDecimal price, String locality, String notes,
+                             LocationService.ResolvedLocation location) {
         listing.setCondition(condition);
         listing.setPriceType(priceType);
         listing.setPrice(normalizePrice(priceType, price));
-        listing.setCity(city.trim());
+        if (location.cityName() == null) {
+            throw ApiException.badRequest("CITY_REQUIRED", "Choose the city where the handover happens.");
+        }
+        listing.setCity(location.cityName());
         listing.setLocality(trimToNull(locality));
         listing.setNotes(trimToNull(notes));
+        listing.setCountryId(location.countryId());
+        listing.setStateId(location.stateId());
+        listing.setCityId(location.cityId());
     }
 
     private BigDecimal normalizePrice(PriceType type, BigDecimal price) {

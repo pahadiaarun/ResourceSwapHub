@@ -1,5 +1,7 @@
 package com.bookbridge.discovery;
 
+import java.util.UUID;
+
 import org.springframework.data.domain.Page;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -34,11 +36,15 @@ public class DiscoveryController {
             @RequestParam(name = "priceType", required = false) PriceType priceType,
             @RequestParam(name = "condition", required = false) BookCondition condition,
             @RequestParam(name = "city", required = false) String city,
+            @RequestParam(name = "stateId", required = false) UUID stateId,
+            @RequestParam(name = "cityId", required = false) UUID cityId,
+            @RequestParam(name = "districtId", required = false) UUID districtId,
             @RequestParam(name = "locality", required = false) String locality,
             @RequestParam(name = "page", defaultValue = "0") int page,
             @RequestParam(name = "size", defaultValue = "12") int size) {
         Page<ListingDto> result = discoveryService.search(new DiscoveryService.DiscoveryQuery(
-                q, subject, classLevel, board, priceType, condition, city, locality, page, size));
+                q, subject, classLevel, board, priceType, condition, city, stateId, cityId, districtId,
+                locality, page, size));
         return ApiResponse.ok(PageResponse.from(result));
     }
 

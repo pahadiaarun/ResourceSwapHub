@@ -21,6 +21,11 @@ import {
   TriangleAlert,
 } from "lucide-react";
 import { BookCover } from "@/components/book-cover";
+import {
+  LocationSelector,
+  locationFromInfo,
+  type LocationValue,
+} from "@/components/location-select";
 import { PhotoUploader, mediaIdFromUrl, type Photo } from "@/components/photo-uploader";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -61,7 +66,6 @@ const schema = z
     condition: z.enum(["NEW", "LIKE_NEW", "GOOD", "FAIR", "POOR"]),
     priceType: z.enum(["FREE", "FIXED_PRICE", "NEGOTIABLE"]),
     price: z.string(),
-    city: z.string().trim().min(1, "City is required").max(80, "City is too long"),
     locality: z.string().trim().max(120, "Locality is too long"),
     notes: z.string().trim().max(2000, "Notes must be 2000 characters or fewer"),
     collectionId: z.string(),
@@ -125,13 +129,30 @@ export function ListingForm({ listing }: { listing?: Listing }) {
       .filter((photo): photo is Photo => Boolean(photo.id))
   );
 
+  // Listing location comes from the directory: pre-filled from the profile so the
+  // common case is one tap, but fully overridable when pickup happens elsewhere.
+  const [location, setLocation] = useState<LocationValue>(() => {
+    const fromListing = locationFromInfo(listing?.location);
+    return fromListing.countryId || fromListing.stateId || fromListing.cityId
+      ? fromListing
+      : locationFromInfo(user?.location);
+  });
+  const [locationError, setLocationError] = useState<string | null>(null);
+
+  const [prevProfileLocation, setPrevProfileLocation] = useState(user?.location);
+  if (prevProfileLocation !== user?.location) {
+    setPrevProfileLocation(user?.location);
+    if (!location.countryId && !location.stateId && !location.cityId) {
+      setLocation(locationFromInfo(user?.location));
+    }
+  }
+
   const form = useForm<Values>({
     resolver: zodResolver(schema),
     defaultValues: {
       condition: listing?.condition ?? "GOOD",
       priceType: listing?.priceType ?? "FREE",
       price: listing?.price ? String(listing.price) : "",
-      city: listing?.city ?? user?.city ?? "",
       locality: listing?.locality ?? user?.locality ?? "",
       notes: listing?.notes ?? "",
       collectionId: listing?.collection?.id ?? "",
@@ -192,7 +213,9 @@ export function ListingForm({ listing }: { listing?: Listing }) {
           values.priceType === "FREE" || !values.price.trim()
             ? null
             : Number(values.price),
-        city: values.city.trim(),
+        countryId: location.countryId ?? null,
+        stateId: location.stateId ?? null,
+        cityId: location.cityId ?? null,
         locality: values.locality.trim() || null,
         notes: values.notes.trim() || null,
         imageIds: photos.map((photo) => photo.id),
@@ -231,6 +254,12 @@ export function ListingForm({ listing }: { listing?: Listing }) {
       toast.error("Choose a catalogue book first.");
       return;
     }
+    if (!location.cityId) {
+      setLocationError("Choose the city where you will hand the book over.");
+      toast.error("Select your pickup city from the list.");
+      return;
+    }
+    setLocationError(null);
     if (!profileReady) {
       toast.error("Add your city and locality to your profile first.");
       return;
@@ -254,7 +283,7 @@ export function ListingForm({ listing }: { listing?: Listing }) {
             {editing ? "Edit listing" : "New listing"}
           </p>
           <h1 className="mt-1.5 font-display text-3xl font-semibold sm:text-4xl">
-            {editing ? "Update your book" : "Put a book on the bridge"}
+            {editing ? "Update your book" : "Put a book on a shelf"}
           </h1>
           <p className="mt-2 max-w-2xl text-sm text-muted-foreground">
             {editing
@@ -638,20 +667,31 @@ export function ListingForm({ listing }: { listing?: Listing }) {
               <MapPin className="size-4 text-primary" /> Pickup & notes
             </h2>
             <div className="mt-4 grid gap-4 sm:grid-cols-2">
-              <label className="flex flex-col gap-1.5">
-                <span className="text-xs font-medium text-muted-foreground">City</span>
-                <Input
-                  {...form.register("city")}
-                  placeholder="Pune"
-                  className="h-10 rounded-xl"
+              <div className="sm:col-span-2">
+                <span className="mb-1.5 block text-xs font-medium text-muted-foreground">
+                  Pickup location
+                </span>
+                <LocationSelector
+                  id="listing-location"
+                  value={location}
+                  onChange={(next) => {
+                    setLocation(next);
+                    if (next.cityId) setLocationError(null);
+                  }}
+                  autoDefaultCountry
+                  labels={{ country: "Country", state: "State", city: "City" }}
                 />
-                {form.formState.errors.city ? (
-                  <span className="text-xs text-destructive">
-                    {form.formState.errors.city.message}
+                {locationError ? (
+                  <span className="mt-1.5 block text-xs text-destructive">
+                    {locationError}
                   </span>
-                ) : null}
-              </label>
-              <label className="flex flex-col gap-1.5">
+                ) : (
+                  <span className="mt-1.5 block text-[11px] text-muted-foreground">
+                    Only city and state are shown publicly — never your address.
+                  </span>
+                )}
+              </div>
+              <label className="flex flex-col gap-1.5 sm:col-span-2">
                 <span className="text-xs font-medium text-muted-foreground">Locality</span>
                 <Input
                   {...form.register("locality")}
@@ -695,7 +735,8 @@ export function ListingForm({ listing }: { listing?: Listing }) {
               <p className="line-clamp-1 text-sm font-semibold">{preview.title}</p>
               <p className="mt-0.5 flex items-center justify-between text-xs">
                 <span className="text-muted-foreground">
-                  {watched.city || "Your city"}
+                  {location.cityName ?? listing?.city ?? user?.city ?? "Your city"}
+                  {location.stateName ? `, ${location.stateName}` : ""}
                 </span>
                 <span className="font-medium text-primary">{formatPrice(preview)}</span>
               </p>
@@ -705,7 +746,7 @@ export function ListingForm({ listing }: { listing?: Listing }) {
               {[
                 ["Catalogue book selected", Boolean(selectedBook)],
                 ["At least one photo", photos.length > 0],
-                ["Pickup city added", Boolean(watched.city?.trim())],
+                ["Pickup city added", Boolean(location.cityId)],
                 ["Price looks valid", !form.formState.errors.price],
               ].map(([label, done]) => (
                 <div key={label as string} className="flex items-center gap-2 text-xs">

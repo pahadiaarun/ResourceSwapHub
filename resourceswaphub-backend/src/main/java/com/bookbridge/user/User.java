@@ -59,6 +59,15 @@ public class User {
     @Column(length = 500)
     private String bio;
 
+    @Column(name = "country_id")
+    private UUID countryId;
+
+    @Column(name = "state_id")
+    private UUID stateId;
+
+    @Column(name = "city_id")
+    private UUID cityId;
+
     @Column(length = 80)
     private String state;
 

@@ -7,6 +7,7 @@ import java.util.UUID;
 
 import com.bookbridge.catalog.BookDto;
 import com.bookbridge.collection.CollectionRef;
+import com.bookbridge.location.LocationDto;
 
 public record ListingDto(
         UUID id,
@@ -20,6 +21,7 @@ public record ListingDto(
         BigDecimal price,
         String city,
         String locality,
+        LocationDto location,
         String notes,
         String status,
         List<String> imageUrls,

@@ -34,6 +34,17 @@ public interface ListingRepository extends JpaRepository<Listing, UUID> {
 
     long countByCollectionIdAndStatus(UUID collectionId, ListingStatus status);
 
+    /**
+     * Rows the directory has not placed yet, plus rows whose city text no longer matches the
+     * directory record stored on them, walked with an id cursor. The directory entities are
+     * referenced by name only, so this stays a read of ids rather than a graph of associations.
+     */
+    @Query("select l.id from Listing l where l.id > :after and ("
+            + "(l.cityId is null and l.city is not null) "
+            + "or (l.cityId is not null and l.city <> (select c.name from City c where c.id = l.cityId))) "
+            + "order by l.id")
+    List<UUID> findLocationCandidateIdsAfter(@Param("after") UUID after, Pageable pageable);
+
     @Query("select distinct l.city from Listing l where l.status = 'AVAILABLE' order by l.city asc")
     List<String> findDistinctAvailableCities();
 
@@ -54,6 +65,10 @@ public interface ListingRepository extends JpaRepository<Listing, UUID> {
               AND (CAST(:priceType AS text) IS NULL OR l.price_type = CAST(:priceType AS text))
               AND (CAST(:condition AS text) IS NULL OR l.condition = CAST(:condition AS text))
               AND (CAST(:city AS text) IS NULL OR lower(l.city) = lower(CAST(:city AS text)))
+              AND (CAST(:stateId AS uuid) IS NULL OR l.state_id = CAST(:stateId AS uuid))
+              AND (CAST(:cityId AS uuid) IS NULL OR l.city_id = CAST(:cityId AS uuid))
+              AND (CAST(:districtId AS uuid) IS NULL OR EXISTS (
+                       SELECT 1 FROM cities dc WHERE dc.id = l.city_id AND dc.district_id = CAST(:districtId AS uuid)))
               AND (CAST(:locality AS text) IS NULL OR lower(coalesce(l.locality, '')) = lower(CAST(:locality AS text)))
             ORDER BY l.created_at DESC, l.id DESC
             """, countQuery = """
@@ -73,6 +88,10 @@ public interface ListingRepository extends JpaRepository<Listing, UUID> {
               AND (CAST(:priceType AS text) IS NULL OR l.price_type = CAST(:priceType AS text))
               AND (CAST(:condition AS text) IS NULL OR l.condition = CAST(:condition AS text))
               AND (CAST(:city AS text) IS NULL OR lower(l.city) = lower(CAST(:city AS text)))
+              AND (CAST(:stateId AS uuid) IS NULL OR l.state_id = CAST(:stateId AS uuid))
+              AND (CAST(:cityId AS uuid) IS NULL OR l.city_id = CAST(:cityId AS uuid))
+              AND (CAST(:districtId AS uuid) IS NULL OR EXISTS (
+                       SELECT 1 FROM cities dc WHERE dc.id = l.city_id AND dc.district_id = CAST(:districtId AS uuid)))
               AND (CAST(:locality AS text) IS NULL OR lower(coalesce(l.locality, '')) = lower(CAST(:locality AS text)))
             """, nativeQuery = true)
     Page<Listing> discover(
@@ -85,6 +104,9 @@ public interface ListingRepository extends JpaRepository<Listing, UUID> {
             @Param("priceType") String priceType,
             @Param("condition") String condition,
             @Param("city") String city,
+            @Param("stateId") UUID stateId,
+            @Param("cityId") UUID cityId,
+            @Param("districtId") UUID districtId,
             @Param("locality") String locality,
             Pageable pageable
     );

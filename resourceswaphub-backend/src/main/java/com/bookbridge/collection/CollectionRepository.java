@@ -1,5 +1,6 @@
 package com.bookbridge.collection;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -16,4 +17,9 @@ public interface CollectionRepository extends JpaRepository<Collection, UUID> {
     @EntityGraph(attributePaths = "owner")
     @Query("select c from Collection c where c.id = :id")
     Optional<Collection> findWithOwnerById(@Param("id") UUID id);
+
+    /** Rows whose location text has never been matched to the directory, walked with an id cursor. */
+    @Query("select c.id from Collection c where c.id > :after and c.cityId is null "
+            + "and c.city is not null order by c.id")
+    List<UUID> findLocationCandidateIdsAfter(@Param("after") UUID after, Pageable pageable);
 }
