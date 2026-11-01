@@ -2,7 +2,9 @@
 
 Flyway is the only supported mechanism for schema change. The API applies
 migrations on startup and Hibernate validates the result with
-`ddl-auto: validate`.
+`ddl-auto: validate`. The files live in the API module itself,
+`resourceswaphub-backend/src/main/resources/db/migration`, so whatever builds the jar also
+ships the schema it expects.
 
 ## Naming and ordering
 
@@ -29,8 +31,8 @@ Examples: `V5__listing_reports.sql`, `V6__reservation_holds.sql`.
    - rename by adding the new column and dual-writing before dropping the old.
 3. Always add primary keys, foreign keys with explicit `ON DELETE`, check
    constraints and comments for non-obvious rules.
-4. Keep SQL portable to managed PostgreSQL: no extensions, no superuser
-   operations, no `COPY … FROM PROGRAM`.
+4. Keep SQL portable to managed PostgreSQL: no superuser operations, no `COPY … FROM PROGRAM`,
+   and no extension beyond `pg_trgm` (created by V5 and available on Aiven).
 5. Never include credentials or environment-specific names.
 
 Template:

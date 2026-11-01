@@ -25,18 +25,21 @@ Flyway applies `V8__normalized_locations.sql` then `V9__location_discovery_index
 Both are safe on an empty or populated database: V8 seeds the two countries, all 28 states and 8
 union territories with their ISO 3166-2:IN codes, and V9 adds indexes only.
 
-**Prerequisite: the migrations must be inside the artifact.** The migration SQL lives in
-`resourceswaphub-database/migrations/` and is copied to `db/migration` on the classpath by the
-backend `pom.xml`. A container or jar built from a context that excludes that sibling directory
-starts against an out-of-date schema and fails at Hibernate validation rather than migrating.
-Verify before deploying: `unzip -l app.jar db/migration` must list V8 and V9.
+**Prerequisite: the migrations must be inside the artifact.** They live in
+`resourceswaphub-backend/src/main/resources/db/migration/`, which Maven packages into
+`BOOT-INF/classes/db/migration` of the same jar that runs Flyway. They were previously kept in
+`resourceswaphub-database/migrations/` and copied across modules by `pom.xml`; a container build
+only receives the backend directory, so that copy silently produced an artifact with no migrations
+at all. The deployed app then left the cloud schema at V6 while its code expected V8 tables, and
+every boot failed with `Schema validation: missing table [cities]`. Verify before deploying:
+`unzip -l app.jar | grep db/migration` must list V8 and V9.
 
 ### 2. Import or seed the directory
 
 Cities and districts are never invented, so the level of detail depends on what has been imported.
 
 ```bash
-# curated starter set (idempotent, only while the cities table is empty, source = CURATED_SEED)
+# curated starter set (idempotent top-up on every boot, insert-missing-only, source = CURATED_SEED)
 java -jar app.jar
 java -jar app.jar --bookbridge.location.seed=false     # to skip it
 
@@ -114,7 +117,8 @@ break the currently deployed frontend and `ddl-auto: validate`.
 | --- | --- | --- |
 | local development (`bookbridge`, 127.0.0.1:55432) | V9 | directory seeded, backfill run, unmatched = 0 |
 | test (`bookbridge_test`) | V9 | created by the test suite; the seed runner fills the directory |
-| cloud (Aiven, used by the deployed app) | **V6** | V7–V9 have not been applied; the deployed container also lacks the migration files in its jar (step 1 prerequisite) |
+| cloud (Aiven, used by the deployed app) | **V6** | V7–V9 are not applied yet. The packaging defect that caused this is fixed (migrations are now in the backend resources), so the next deploy applies them and seeds the directory automatically |
 
-Do not run the backfill against a database that has not reached V9, and do not treat the cloud
-schema as current until the packaged migrations are fixed and applied.
+Do not run the backfill against a database that has not reached V9. On the cloud, let the
+deployed app apply V7–V9 first, check `flyway_schema_history` and the seeded directory, and only
+then run a deliberate `--bookbridge.location.backfill=true` pass.

@@ -142,16 +142,9 @@
 	</dependencies>
 
 	<build>
-		<resources>
-			<resource>
-				<directory>src/main/resources</directory>
-			</resource>
-			<resource>
-				<directory>${project.basedir}/../resourceswaphub-database/migrations</directory>
-				<targetPath>db/migration</targetPath>
-				<filtering>false</filtering>
-			</resource>
-		</resources>
+		<!-- Flyway migrations live under src/main/resources/db/migration because a container build
+		     receives only this directory: a sibling-module resource path is silently skipped and
+		     ships a jar whose code expects tables the deployed schema never got. -->
 		<plugins>
 			<plugin>
 				<groupId>org.springframework.boot</groupId>

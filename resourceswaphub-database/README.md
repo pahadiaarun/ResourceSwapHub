@@ -1,8 +1,10 @@
 # ResourceSwapHub Database
 
 PostgreSQL is the single source of truth for all ResourceSwapHub data. Flyway owns the
-schema: the files under [`migrations/`](migrations) are the only supported way to
-change DDL, and the application validates the resulting schema on every boot.
+schema: the versioned files under
+[`../resourceswaphub-backend/src/main/resources/db/migration`](../resourceswaphub-backend/src/main/resources/db/migration)
+are the only supported way to change DDL, and the application validates the resulting
+schema on every boot.
 
 ## Layout
 
@@ -10,7 +12,6 @@ change DDL, and the application validates the resulting schema on every boot.
 resourceswaphub-database/
 ├── README.md
 ├── docs/                 # design and operations documentation
-├── migrations/           # Flyway versioned migrations (V1 … V6)
 ├── seeds/
 │   ├── reference/        # canonical catalogue data, safe for any environment
 │   └── development/      # demo users, listings and chats, development only
@@ -70,22 +71,35 @@ update `resourceswaphub-backend/.env` to match).
 
 ## Migrations
 
+They live inside the API module (`src/main/resources/db/migration`) on purpose. Flyway
+reads them from the classpath, and a container build only ever receives the
+`resourceswaphub-backend` directory, so a sibling-module path would silently produce an
+artifact with no migrations: the deploy would keep the database at an old version while
+the code expected the new one.
+
 | Version | File | Purpose |
 | --- | --- | --- |
 | V1 | `V1__identity_and_media.sql` | users, refresh tokens, media assets |
 | V2 | `V2__catalog_and_listings.sql` | books, collections, listings, listing images |
 | V3 | `V3__communication.sql` | conversations, participants, messages |
 | V4 | `V4__search_and_performance_indexes.sql` | FTS and discovery indexes |
+| V5 | `V5__extended_profiles_and_institutions.sql` | extended profiles, institutions, `pg_trgm` |
+| V6 | `V6__request_encryption.sql` | encrypted request payload columns |
+| V7 | `V7__knowledge_topics_and_normalized_records.sql` | knowledge topics, institution records |
+| V8 | `V8__normalized_locations.sql` | country/state/district/city directory + FK columns |
+| V9 | `V9__location_discovery_indexes.sql` | discovery indexes on standardized location |
 
 Rules:
 
 - Never edit an applied migration. Add a new versioned file instead.
-- Migrations must be portable to Aiven/any managed PostgreSQL: no extensions and
-  no superuser-only features.
+- Keep the extension surface to what Aiven provides (`pg_trgm` from V5) and never require
+  a superuser, so the same files run on managed PostgreSQL.
 - Every new table needs primary keys, foreign keys, check constraints and the
   indexes its queries require.
 - Apply migrations by starting the API (or by running Maven tests, which migrate
   `bookbridge_test`). Do not run DDL by hand in shared environments.
+- Before deploying, confirm the artifact actually carries them:
+  `unzip -l app.jar | grep db/migration`.
 
 See [`docs/MIGRATION_GUIDE.md`](docs/MIGRATION_GUIDE.md) before writing one.
 

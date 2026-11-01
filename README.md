@@ -13,9 +13,9 @@ together locally; GitHub Actions runs the CI gates.
 
 ```
 ResourceSwapHub/
-├── resourceswaphub-backend/    # Spring Boot API (REST + WebSocket), Java 21
+├── resourceswaphub-backend/    # Spring Boot API (REST + WebSocket), Java 21, owns the Flyway migrations
 ├── resourceswaphub-frontend/   # Next.js App Router web client, installable PWA
-├── resourceswaphub-database/   # Flyway migrations, seeds, scripts and schema documentation
+├── resourceswaphub-database/   # seeds, scripts and schema documentation
 ├── docker-compose.yml
 ├── Makefile
 └── .github/workflows/ci.yml
@@ -175,8 +175,9 @@ complete the manual steps below.
 
 ## Database
 
-Flyway is the source of truth for DDL (`ResourceSwapHub
-database/migrations/V1…V6`). Every table
+Flyway is the source of truth for DDL, and its versioned files
+(`resourceswaphub-backend/src/main/resources/db/migration/V1…V9`) live inside the API module so
+every jar carries the schema its code expects. Every table
 is documented in [`resourceswaphub-database/docs/`](resourceswaphub-database/docs) — ER diagram, schema
 reference, data dictionary, indexing strategy, business constraints, query
 catalog, migration guide and backup/restore runbook. The database README
@@ -185,7 +186,7 @@ data.
 
 Hard rules: never hand-edit a migrated schema, never apply DDL manually in
 shared environments, add a new versioned migration instead, and keep
-migrations portable (no extensions, no superuser-only statements) so the schema
+migrations portable (only `pg_trgm`, no superuser-only statements) so the schema
 works on Aiven or any managed PostgreSQL.
 
 ## Testing & CI
