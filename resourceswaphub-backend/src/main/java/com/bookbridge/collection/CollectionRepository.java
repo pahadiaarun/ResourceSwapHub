@@ -14,6 +14,13 @@ import org.springframework.data.repository.query.Param;
 public interface CollectionRepository extends JpaRepository<Collection, UUID> {
     Page<Collection> findByOwnerIdOrderByCreatedAtDesc(UUID ownerId, Pageable pageable);
 
+    /** Public browse page, newest first. */
+    Page<Collection> findByVisibilityOrderByCreatedAtDesc(CollectionVisibility visibility, Pageable pageable);
+
+    @Query("select c from Collection c where c.visibility = com.bookbridge.collection.CollectionVisibility.PUBLIC "
+            + "and lower(c.title) like concat('%', :q, '%') order by c.createdAt desc")
+    Page<Collection> searchPublic(@Param("q") String q, Pageable pageable);
+
     @EntityGraph(attributePaths = "owner")
     @Query("select c from Collection c where c.id = :id")
     Optional<Collection> findWithOwnerById(@Param("id") UUID id);

@@ -3,9 +3,14 @@ package com.bookbridge.collection;
 import java.time.Instant;
 import java.util.UUID;
 
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
+import com.bookbridge.category.ResourceCategory;
+import com.bookbridge.shared.media.MediaAsset;
 import com.bookbridge.user.User;
 
 import jakarta.persistence.Column;
@@ -47,6 +52,27 @@ public class Collection {
 
     @Column(length = 120)
     private String locality;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "cover_media_id")
+    private MediaAsset coverMedia;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "category_id")
+    private ResourceCategory category;
+
+    @Column(name = "academic_level", length = 80)
+    private String academicLevel;
+
+    @Column(length = 200)
+    private String institution;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 20)
+    private CollectionVisibility visibility = CollectionVisibility.PRIVATE;
+
+    @Column(name = "published_at")
+    private Instant publishedAt;
 
     // Standardized location; `city` above mirrors cityId's canonical name for pre-directory clients.
     @Column(name = "country_id")

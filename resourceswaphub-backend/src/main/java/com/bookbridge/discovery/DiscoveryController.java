@@ -1,8 +1,8 @@
 package com.bookbridge.discovery;
 
+import java.math.BigDecimal;
 import java.util.UUID;
 
-import org.springframework.data.domain.Page;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -30,11 +30,16 @@ public class DiscoveryController {
     @GetMapping("/listings")
     public ApiResponse<PageResponse<ListingDto>> listings(
             @RequestParam(name = "q", required = false) String q,
+            @RequestParam(name = "categoryId", required = false) UUID categoryId,
             @RequestParam(name = "subject", required = false) String subject,
             @RequestParam(name = "classLevel", required = false) Integer classLevel,
+            @RequestParam(name = "academicLevel", required = false) String academicLevel,
             @RequestParam(name = "board", required = false) String board,
             @RequestParam(name = "priceType", required = false) PriceType priceType,
             @RequestParam(name = "condition", required = false) BookCondition condition,
+            @RequestParam(name = "minPrice", required = false) BigDecimal minPrice,
+            @RequestParam(name = "maxPrice", required = false) BigDecimal maxPrice,
+            @RequestParam(name = "sort", required = false) DiscoveryService.Sort sort,
             @RequestParam(name = "city", required = false) String city,
             @RequestParam(name = "stateId", required = false) UUID stateId,
             @RequestParam(name = "cityId", required = false) UUID cityId,
@@ -42,10 +47,10 @@ public class DiscoveryController {
             @RequestParam(name = "locality", required = false) String locality,
             @RequestParam(name = "page", defaultValue = "0") int page,
             @RequestParam(name = "size", defaultValue = "12") int size) {
-        Page<ListingDto> result = discoveryService.search(new DiscoveryService.DiscoveryQuery(
-                q, subject, classLevel, board, priceType, condition, city, stateId, cityId, districtId,
-                locality, page, size));
-        return ApiResponse.ok(PageResponse.from(result));
+        PageResponse<ListingDto> result = discoveryService.search(new DiscoveryService.DiscoveryQuery(
+                q, categoryId, subject, classLevel, academicLevel, board, priceType, condition,
+                minPrice, maxPrice, sort, city, stateId, cityId, districtId, locality, page, size));
+        return ApiResponse.ok(result);
     }
 
     @GetMapping("/filters")

@@ -77,6 +77,9 @@ public class User {
     @Column(name = "preferred_language", length = 10)
     private String preferredLanguage = "en";
 
+    @Column(nullable = false, length = 20)
+    private String role = "USER";
+
     @Column(name = "profile_visibility", length = 20)
     private String profileVisibility = "PUBLIC";
 

@@ -24,11 +24,17 @@ import com.bookbridge.user.UserRepository;
 @Service
 public class MediaService {
     private static final long MAX_BYTES = 5L * 1024 * 1024;
+    private static final long MAX_DOCUMENT_BYTES = 20L * 1024 * 1024;
     private static final Set<String> ALLOWED_TYPES = Set.of("image/jpeg", "image/png", "image/webp");
+    private static final Set<String> ALLOWED_DOCUMENT_TYPES = Set.of("application/pdf", "text/plain");
     private static final Map<String, String> EXTENSIONS = Map.of(
             "image/jpeg", "jpg",
             "image/png", "png",
             "image/webp", "webp"
+    );
+    private static final Map<String, String> DOCUMENT_EXTENSIONS = Map.of(
+            "application/pdf", "pdf",
+            "text/plain", "txt"
     );
 
     private final MediaAssetRepository mediaRepository;
@@ -49,26 +55,38 @@ public class MediaService {
         User owner = userRepository.findById(ownerId)
                 .orElseThrow(() -> ApiException.unauthorized("Your account could not be found."));
         if (file == null || file.isEmpty()) {
-            throw ApiException.badRequest("FILE_REQUIRED", "Choose an image to upload.");
+            throw ApiException.badRequest("FILE_REQUIRED", "Choose a file to upload.");
         }
-        if (file.getSize() > MAX_BYTES) {
-            throw ApiException.badRequest("FILE_TOO_LARGE", "Images must be 5 MB or smaller.");
+        boolean isDocument = purpose == MediaPurpose.DOCUMENT;
+        long limit = isDocument ? MAX_DOCUMENT_BYTES : MAX_BYTES;
+        if (file.getSize() > limit) {
+            throw ApiException.badRequest("FILE_TOO_LARGE", "Files must be 20 MB or smaller.");
         }
         String contentType = file.getContentType() == null ? "" : file.getContentType().toLowerCase(Locale.ROOT);
-        if (!ALLOWED_TYPES.contains(contentType)) {
+        if (isDocument) {
+            if (!ALLOWED_DOCUMENT_TYPES.contains(contentType)) {
+                throw ApiException.badRequest("UNSUPPORTED_DOCUMENT",
+                        "Only PDF and plain-text documents are supported.");
+            }
+        } else if (!ALLOWED_TYPES.contains(contentType)) {
             throw ApiException.badRequest("UNSUPPORTED_IMAGE", "Only JPEG, PNG and WebP images are supported.");
         }
         byte[] bytes;
         try {
             bytes = file.getBytes();
         } catch (IOException ex) {
-            throw ApiException.badRequest("UPLOAD_FAILED", "The image could not be read.");
+            throw ApiException.badRequest("UPLOAD_FAILED", "The file could not be read.");
         }
-        if (!matchesMagicBytes(contentType, bytes)) {
-            throw ApiException.badRequest("UNSUPPORTED_IMAGE", "The file does not look like a valid image.");
+        boolean valid = isDocument
+                ? matchesDocumentBytes(contentType, bytes)
+                : matchesMagicBytes(contentType, bytes);
+        if (!valid) {
+            throw isDocument
+                    ? ApiException.badRequest("UNSUPPORTED_DOCUMENT", "The file does not look like a valid PDF or text document.")
+                    : ApiException.badRequest("UNSUPPORTED_IMAGE", "The file does not look like a valid image.");
         }
 
-        String extension = EXTENSIONS.get(contentType);
+        String extension = (isDocument ? DOCUMENT_EXTENSIONS : EXTENSIONS).get(contentType);
         String storageKey = purpose.name().toLowerCase(Locale.ROOT) + "/" + UUID.randomUUID() + "." + extension;
         Path target = storageRoot.resolve(storageKey).normalize();
         if (!target.startsWith(storageRoot)) {
@@ -101,9 +119,54 @@ public class MediaService {
         }
     }
 
+    /** Refuses anything but a PDF header or genuinely decodable plain text — no executables, archives or HTML wrappers. */
+    private boolean matchesDocumentBytes(String contentType, byte[] bytes) {
+        if (bytes.length < 4) {
+            return false;
+        }
+        if ("application/pdf".equals(contentType)) {
+            return bytes[0] == '%' && bytes[1] == 'P' && bytes[2] == 'D' && bytes[3] == 'F';
+        }
+        // text/plain: reject any byte sequence that looks binary (NUL or >5% control chars).
+        int control = 0;
+        for (byte value : bytes) {
+            if (value == 0) {
+                return false;
+            }
+            int unsigned = value & 0xFF;
+            if (unsigned < 0x20 && unsigned != '\n' && unsigned != '\r' && unsigned != '\t') {
+                control++;
+                if (control > Math.max(2, bytes.length / 20)) {
+                    return false;
+                }
+            }
+        }
+        return true;
+    }
+
     public MediaAsset getRequired(UUID id) {
         return mediaRepository.findById(id)
                 .orElseThrow(() -> ApiException.notFound("That image could not be found."));
+    }
+
+    /**
+     * Document assets are private: readable only by their owner, or by signed-in
+     * users when a live listing references them.
+     */
+    @org.springframework.transaction.annotation.Transactional(readOnly = true)
+    public void authorizeDocumentAccess(UUID mediaId, UUID viewerId) {
+        MediaAsset asset = getRequired(mediaId);
+        if (asset.getOwner() != null && asset.getOwner().getId().equals(viewerId)) {
+            return;
+        }
+        Integer referencingListings = jdbcTemplate.queryForObject(
+                "SELECT count(*) FROM listings l "
+                        + "LEFT JOIN users u ON u.id = l.owner_id "
+                        + "WHERE l.digital_media_id = ? AND l.status = 'AVAILABLE' "
+                        + "AND l.moderation_state = 'NONE'", Integer.class, mediaId);
+        if (referencingListings == null || referencingListings == 0) {
+            throw ApiException.notFound("That file could not be found.");
+        }
     }
 
     public Resource load(MediaAsset asset) {
@@ -124,8 +187,13 @@ public class MediaService {
                 "SELECT count(*) FROM listing_images WHERE media_id = ?", Integer.class, mediaId);
         Integer avatarUses = jdbcTemplate.queryForObject(
                 "SELECT count(*) FROM users WHERE avatar_url = ?", Integer.class, asset.publicUrl());
-        if ((listingUses != null && listingUses > 0) || (avatarUses != null && avatarUses > 0)) {
-            throw ApiException.conflict("IMAGE_IN_USE", "This image is in use and cannot be removed.");
+        Integer digitalUses = jdbcTemplate.queryForObject(
+                "SELECT count(*) FROM listings WHERE digital_media_id = ?", Integer.class, mediaId);
+        Integer coverUses = jdbcTemplate.queryForObject(
+                "SELECT count(*) FROM collections WHERE cover_media_id = ?", Integer.class, mediaId);
+        if ((listingUses != null && listingUses > 0) || (avatarUses != null && avatarUses > 0)
+                || (digitalUses != null && digitalUses > 0) || (coverUses != null && coverUses > 0)) {
+            throw ApiException.conflict("IMAGE_IN_USE", "This file is in use and cannot be removed.");
         }
         Path file = storageRoot.resolve(asset.getStorageKey()).normalize();
         mediaRepository.delete(asset);

@@ -3,6 +3,7 @@ package com.bookbridge.shared.media;
 import java.time.Duration;
 
 import org.springframework.core.io.Resource;
+import org.springframework.security.core.Authentication;
 import org.springframework.http.CacheControl;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -18,6 +19,7 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
 import com.bookbridge.shared.api.ApiResponse;
+import com.bookbridge.shared.error.ApiException;
 import com.bookbridge.shared.media.MediaPurpose;
 import com.bookbridge.shared.security.SecurityUtils;
 
@@ -41,8 +43,16 @@ public class MediaController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<Resource> get(@PathVariable UUID id) {
+    public ResponseEntity<Resource> get(@PathVariable UUID id, Authentication authentication) {
         MediaAsset asset = mediaService.getRequired(id);
+        if (asset.getPurpose() == MediaPurpose.DOCUMENT) {
+            // Documents are never public: access goes through the listing file endpoint.
+            UUID viewerId = SecurityUtils.optionalUserId(authentication);
+            if (viewerId == null) {
+                throw ApiException.unauthorized("Sign in to access this file.");
+            }
+            mediaService.authorizeDocumentAccess(id, viewerId);
+        }
         Resource resource = mediaService.load(asset);
         return ResponseEntity.ok()
                 .contentType(MediaType.parseMediaType(asset.getContentType()))

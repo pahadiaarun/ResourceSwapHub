@@ -1,15 +1,19 @@
 package com.bookbridge.discovery;
 
+import java.math.BigDecimal;
 import java.util.Locale;
 import java.util.UUID;
 import java.util.function.Consumer;
 
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.bookbridge.catalog.EducationBoard;
+import com.bookbridge.category.CategoryService;
 import com.bookbridge.listing.BookCondition;
 import com.bookbridge.listing.Listing;
 import com.bookbridge.listing.ListingDto;
@@ -17,23 +21,28 @@ import com.bookbridge.listing.ListingMapper;
 import com.bookbridge.listing.ListingRepository;
 import com.bookbridge.listing.PriceType;
 import com.bookbridge.location.LocationService;
+import com.bookbridge.shared.api.PageResponse;
 import com.bookbridge.shared.error.ApiException;
 
 @Service
 public class DiscoveryService {
+    public enum Sort { NEWEST, OLDEST, PRICE_ASC, PRICE_DESC }
+
     private final ListingRepository listingRepository;
     private final ListingMapper listingMapper;
     private final LocationService locationService;
+    private final CategoryService categoryService;
 
     public DiscoveryService(ListingRepository listingRepository, ListingMapper listingMapper,
-                            LocationService locationService) {
+                            LocationService locationService, CategoryService categoryService) {
         this.listingRepository = listingRepository;
         this.listingMapper = listingMapper;
         this.locationService = locationService;
+        this.categoryService = categoryService;
     }
 
     @Transactional(readOnly = true)
-    public Page<ListingDto> search(DiscoveryQuery query) {
+    public PageResponse<ListingDto> search(DiscoveryQuery query) {
         int page = Math.max(query.page(), 0);
         int size = Math.max(1, Math.min(query.size(), 48));
         String q = query.q() == null ? "" : query.q().trim();
@@ -42,18 +51,26 @@ public class DiscoveryService {
         String likeQuery = hasQuery ? "%" + escapeLike(q.toLowerCase(Locale.ROOT)) + "%" : "%";
         String board = parseBoard(query.board());
         String subject = blankToNull(query.subject());
+        String academicLevel = blankToNull(query.academicLevel());
         String city = blankToNull(query.city());
         String locality = blankToNull(query.locality());
         String priceType = query.priceType() == null ? null : query.priceType().name();
         String condition = query.condition() == null ? null : query.condition().name();
+        UUID categoryId = query.categoryId() == null ? null
+                : categoryService.requireById(query.categoryId()).getId();
 
+        Pageable pageable = PageRequest.of(page, size);
         Page<Listing> results = listingRepository.discover(
                 hasQuery,
                 tsQuery,
                 likeQuery,
+                categoryId,
                 subject,
+                academicLevel,
                 query.classLevel(),
                 board,
+                query.minPrice(),
+                query.maxPrice(),
                 priceType,
                 condition,
                 city,
@@ -61,10 +78,13 @@ public class DiscoveryService {
                 validated(query.cityId(), locationService::requireCity),
                 validated(query.districtId(), locationService::requireDistrict),
                 locality,
-                PageRequest.of(page, size)
+                query.sort() == null ? 0 : query.sort().ordinal(),
+                pageable
         );
         LocationService.LocationIndex index = listingMapper.indexFor(results.getContent());
-        return results.map(listing -> listingMapper.toDto(listing, index));
+        Page<ListingDto> mapped = results.map(listing -> listingMapper.toDto(listing, index));
+        return new PageResponse<>(mapped.getContent(), page, size, mapped.getTotalElements(),
+                mapped.getTotalPages(), mapped.hasNext());
     }
 
     /** Rejects an unknown location id with the same error the directory API gives, instead of an empty page. */
@@ -121,11 +141,16 @@ public class DiscoveryService {
 
     public record DiscoveryQuery(
             String q,
+            UUID categoryId,
             String subject,
             Integer classLevel,
+            String academicLevel,
             String board,
             PriceType priceType,
             BookCondition condition,
+            BigDecimal minPrice,
+            BigDecimal maxPrice,
+            Sort sort,
             String city,
             UUID stateId,
             UUID cityId,

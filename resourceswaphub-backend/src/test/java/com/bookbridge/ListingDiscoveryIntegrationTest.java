@@ -37,11 +37,13 @@ class ListingDiscoveryIntegrationTest extends ApiIntegrationTest {
         String listingId = create.data().path("id").asString();
         assertThat(create.data().path("price").isNull() || create.data().path("price").isMissingNode()).isTrue();
         assertThat(create.data().path("status").asString()).isEqualTo("AVAILABLE");
-        assertThat(create.data().path("collection").path("id").asString()).isEqualTo(collectionId);
 
+        // Membership lives in collection_items (a listing can belong to several collections), so the
+        // create response no longer echoes a single collection — the collection itself is the source.
         var collectionDetail = api.get("/api/v1/collections/" + collectionId, owner.token());
         assertThat(collectionDetail.status()).isEqualTo(200);
         assertThat(collectionDetail.data().path("items").size()).isEqualTo(1);
+        assertThat(collectionDetail.data().path("items").get(0).path("id").asString()).isEqualTo(listingId);
 
         var search = api.get("/api/v1/discovery/listings?q=Mathematics&classLevel=10&board=CBSE"
                 + "&priceType=FREE&condition=LIKE_NEW&city=Pune&page=0&size=12", null);

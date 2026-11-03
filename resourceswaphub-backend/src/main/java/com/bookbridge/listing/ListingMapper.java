@@ -5,8 +5,9 @@ import java.util.List;
 import org.springframework.stereotype.Component;
 
 import com.bookbridge.catalog.BookDto;
-import com.bookbridge.collection.CollectionRef;
+import com.bookbridge.category.ResourceCategoryDto;
 import com.bookbridge.location.LocationService;
+import com.bookbridge.shared.media.MediaDto;
 
 @Component
 public class ListingMapper {
@@ -37,25 +38,35 @@ public class ListingMapper {
         List<String> images = listing.getImages().stream()
                 .map(image -> image.getMedia().publicUrl())
                 .toList();
-        CollectionRef collection = listing.getCollection() == null
-                ? null
-                : new CollectionRef(listing.getCollection().getId(), listing.getCollection().getTitle());
         return new ListingDto(
                 listing.getId(),
-                BookDto.from(listing.getBook()),
+                listing.getCategory() == null ? null : ResourceCategoryDto.from(listing.getCategory()),
+                listing.getBook() == null ? null : BookDto.from(listing.getBook()),
                 SellerDto.from(listing.getOwner()),
-                collection,
-                listing.getCondition().name(),
-                listing.getCondition().label(),
+                listing.getTitle(),
+                listing.getCondition() == null ? null : listing.getCondition().name(),
+                listing.getCondition() == null ? null : listing.getCondition().label(),
+                listing.getMedium() == null ? ListingMedium.PHYSICAL.name() : listing.getMedium().name(),
                 listing.getPriceType().name(),
                 listing.getPriceType().label(),
                 listing.getPrice(),
                 listing.getCity(),
                 listing.getLocality(),
                 index.of(listing.getCountryId(), listing.getStateId(), listing.getCityId()),
+                listing.getSubject(),
+                listing.getAcademicLevel(),
+                listing.getBoard(),
+                listing.getAuthor(),
+                listing.getPublisher(),
+                listing.getEdition(),
+                listing.getPublicationYear() == null ? null : listing.getPublicationYear().intValue(),
                 listing.getNotes(),
+                listing.getExternalUrl(),
+                listing.getDigitalMedia() == null ? null : MediaDto.from(listing.getDigitalMedia()),
+                listing.isOwnerRightsConfirmed(),
                 listing.getStatus().name(),
                 images,
+                listing.getClientRef(),
                 listing.getCreatedAt(),
                 listing.getUpdatedAt()
         );
