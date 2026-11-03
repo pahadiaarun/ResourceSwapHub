@@ -43,9 +43,13 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                         .requestMatchers("/api/v1/auth/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/v1/media/**").permitAll()
+                        // Digital resource files always require a signed-in viewer; the
+                        // more specific rule must come before the generic listing browse rule.
+                        .requestMatchers(HttpMethod.GET, "/api/v1/listings/*/file").authenticated()
                         // Browsing is open to guests; every write still requires a signed-in owner.
                         .requestMatchers(HttpMethod.GET, "/api/v1/discovery/**", "/api/v1/listings/**",
-                                "/api/v1/collections/**", "/api/v1/catalog/**", "/api/v1/institutions/**",
+                                "/api/v1/collections/**", "/api/v1/resource-requests/**", "/api/v1/categories/**",
+                                "/api/v1/catalog/**", "/api/v1/institutions/**",
                                 "/api/v1/locations/**").permitAll()
                         .requestMatchers("/ws/**").permitAll()
                         .requestMatchers("/actuator/health", "/actuator/info").permitAll()

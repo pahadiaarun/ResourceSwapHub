@@ -6,6 +6,10 @@ import java.util.UUID;
 
 import com.bookbridge.listing.SellerDto;
 
+/**
+ * One record for both conversation flavours: listing conversations fill the
+ * listing* fields, request conversations fill the request* fields.
+ */
 public record ConversationSummaryDto(
         UUID id,
         UUID listingId,
@@ -15,6 +19,9 @@ public record ConversationSummaryDto(
         String listingPriceType,
         BigDecimal listingPrice,
         String listingStatus,
+        UUID requestId,
+        String requestTitle,
+        String requestStatus,
         SellerDto otherParticipant,
         MessageDto lastMessage,
         long unreadCount,

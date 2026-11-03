@@ -1,5 +1,6 @@
 package com.bookbridge.communication;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -13,7 +14,7 @@ import org.springframework.data.repository.query.Param;
 public interface ConversationRepository extends JpaRepository<Conversation, UUID> {
     Optional<Conversation> findByDirectKey(String directKey);
 
-    @EntityGraph(attributePaths = {"listing", "listing.book", "listing.owner", "listing.images", "listing.images.media"})
+    @EntityGraph(attributePaths = {"listing", "listing.book", "listing.owner", "listing.images", "listing.images.media", "request"})
     @Query("select c from Conversation c where c.id = :id")
     Optional<Conversation> findDetailedById(@Param("id") UUID id);
 
@@ -30,7 +31,9 @@ public interface ConversationRepository extends JpaRepository<Conversation, UUID
             where exists (
                 select 1 from ConversationParticipant p
                 where p.conversation = c and p.user.id = :userId
-            )
-            """)
+            )            """ )
     Page<Conversation> findForUser(@Param("userId") UUID userId, Pageable pageable);
+
+    @EntityGraph(attributePaths = {"listing", "request"})
+    List<Conversation> findByRequestId(@Param("requestId") UUID requestId);
 }

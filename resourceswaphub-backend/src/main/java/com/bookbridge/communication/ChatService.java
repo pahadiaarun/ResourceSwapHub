@@ -20,6 +20,10 @@ import org.springframework.transaction.annotation.Transactional;
 import com.bookbridge.listing.Listing;
 import com.bookbridge.listing.ListingService;
 import com.bookbridge.listing.SellerDto;
+import com.bookbridge.notification.NotificationService;
+import com.bookbridge.notification.NotificationType;
+import com.bookbridge.request.ResourceRequest;
+import com.bookbridge.request.RequestStatus;
 import com.bookbridge.shared.error.ApiException;
 import com.bookbridge.user.User;
 import com.bookbridge.user.UserService;
@@ -31,6 +35,7 @@ public class ChatService {
     private final MessageRepository messageRepository;
     private final UserService userService;
     private final ListingService listingService;
+    private final NotificationService notificationService;
     private final ApplicationEventPublisher eventPublisher;
 
     public ChatService(ConversationRepository conversationRepository,
@@ -38,12 +43,14 @@ public class ChatService {
                        MessageRepository messageRepository,
                        UserService userService,
                        ListingService listingService,
+                       NotificationService notificationService,
                        ApplicationEventPublisher eventPublisher) {
         this.conversationRepository = conversationRepository;
         this.participantRepository = participantRepository;
         this.messageRepository = messageRepository;
         this.userService = userService;
         this.listingService = listingService;
+        this.notificationService = notificationService;
         this.eventPublisher = eventPublisher;
     }
 
@@ -77,6 +84,73 @@ public class ChatService {
         interested.setRole(ParticipantRole.INTERESTED);
         participantRepository.saveAll(List.of(owner, interested));
         return summary(conversation, userId);
+    }
+
+    /**
+     * Reuses the direct-chat model for resource requests: one conversation per
+     * (request, user pair), never a second messaging system. The requester
+     * receives a REQUEST_RESPONSE notification the first time someone responds,
+     * but only while the request is still open.
+     */
+    @Transactional
+    public ConversationSummaryDto startForRequest(UUID userId, ResourceRequest request) {
+        User responder = userService.require(userId);
+        if (!responder.isProfileComplete()) {
+            throw ApiException.badRequest("PROFILE_INCOMPLETE",
+                    "Add your city and locality before responding to a request.");
+        }
+        UUID requesterId = request.getRequester().getId();
+        String directKey = "req:" + request.getId() + ":" + directPair(requesterId, userId);
+        Conversation existing = conversationRepository.findByDirectKey(directKey).orElse(null);
+        if (existing != null) {
+            return summary(existing, userId);
+        }
+        Conversation conversation = new Conversation();
+        conversation.setRequest(request);
+        conversation.setDirectKey(directKey);
+        conversation.setLastMessageAt(Instant.now());
+        conversationRepository.saveAndFlush(conversation);
+
+        ConversationParticipant owner = new ConversationParticipant();
+        owner.setConversation(conversation);
+        owner.setUser(request.getRequester());
+        owner.setRole(ParticipantRole.OWNER);
+        ConversationParticipant interested = new ConversationParticipant();
+        interested.setConversation(conversation);
+        interested.setUser(responder);
+        interested.setRole(ParticipantRole.INTERESTED);
+        participantRepository.saveAll(List.of(owner, interested));
+
+        if (request.getStatus() == RequestStatus.OPEN) {
+            notificationService.create(requesterId, NotificationType.REQUEST_RESPONSE,
+                    "New response to your request",
+                    "Someone responded to “" + request.getTitle() + "”. Open the conversation to reply.",
+                    "/requests/" + request.getId(), request.getId(), false);
+        }
+        return summary(conversation, userId);
+    }
+
+    /** Sends a REQUEST_FULFILLED notification to everyone who responded. */
+    @Transactional
+    public void notifyRequestFulfilled(ResourceRequest request, UUID requesterId) {
+        List<UUID> requestConversationIds = conversationRepository.findByRequestId(request.getId())
+                .stream()
+                .map(Conversation::getId)
+                .toList();
+        if (requestConversationIds.isEmpty()) {
+            return;
+        }
+        for (ConversationParticipant participant
+                : participantRepository.findByConversationIdIn(requestConversationIds)) {
+            UUID participantId = participant.getUser().getId();
+            if (participantId.equals(requesterId)) {
+                continue;
+            }
+            notificationService.create(participantId, NotificationType.REQUEST_FULFILLED,
+                    "Request you responded to was fulfilled",
+                    "“" + request.getTitle() + "” was fulfilled by its requester.",
+                    "/requests/" + request.getId(), request.getId(), false);
+        }
     }
 
     @Transactional(readOnly = true)
@@ -203,19 +277,49 @@ public class ChatService {
                 .map(p -> SellerDto.from(p.getUser()))
                 .orElse(null);
         Listing listing = conversation.getListing();
-        String cover = listing.getImages().stream()
-                .findFirst()
-                .map(image -> image.getMedia().publicUrl())
-                .orElse(null);
+        if (listing != null) {
+            String cover = listing.getImages().stream()
+                    .findFirst()
+                    .map(image -> image.getMedia().publicUrl())
+                    .orElse(null);
+            String listingTitle = listing.getBook() != null
+                    ? listing.getBook().getTitle()
+                    : listing.getTitle();
+            String listingAuthor = listing.getBook() != null
+                    ? listing.getBook().getAuthor()
+                    : listing.getAuthor();
+            return new ConversationSummaryDto(
+                    conversation.getId(),
+                    listing.getId(),
+                    listingTitle,
+                    listingAuthor,
+                    cover,
+                    listing.getPriceType().name(),
+                    listing.getPrice(),
+                    listing.getStatus().name(),
+                    null,
+                    null,
+                    null,
+                    other,
+                    lastMessage,
+                    unread,
+                    conversation.getCreatedAt(),
+                    conversation.getLastMessageAt()
+            );
+        }
+        ResourceRequest request = conversation.getRequest();
         return new ConversationSummaryDto(
                 conversation.getId(),
-                listing.getId(),
-                listing.getBook().getTitle(),
-                listing.getBook().getAuthor(),
-                cover,
-                listing.getPriceType().name(),
-                listing.getPrice(),
-                listing.getStatus().name(),
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                request.getId(),
+                request.getTitle(),
+                request.getStatus().name(),
                 other,
                 lastMessage,
                 unread,
@@ -229,8 +333,12 @@ public class ChatService {
     }
 
     private String directKey(UUID listingId, UUID ownerId, UUID buyerId) {
-        UUID low = Comparator.<UUID>naturalOrder().compare(ownerId, buyerId) <= 0 ? ownerId : buyerId;
-        UUID high = low.equals(ownerId) ? buyerId : ownerId;
-        return listingId + ":" + low + ":" + high;
+        return listingId + ":" + directPair(ownerId, buyerId);
+    }
+
+    private String directPair(UUID first, UUID second) {
+        UUID low = Comparator.<UUID>naturalOrder().compare(first, second) <= 0 ? first : second;
+        UUID high = low.equals(first) ? second : first;
+        return low + ":" + high;
     }
 }

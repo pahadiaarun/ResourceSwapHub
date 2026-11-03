@@ -6,6 +6,7 @@ import java.util.UUID;
 import org.hibernate.annotations.CreationTimestamp;
 
 import com.bookbridge.listing.Listing;
+import com.bookbridge.request.ResourceRequest;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -37,9 +38,14 @@ public class Conversation {
     @Column(nullable = false, length = 20)
     private ConversationType type = ConversationType.DIRECT;
 
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "listing_id", nullable = false)
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "listing_id")
     private Listing listing;
+
+    /** Request conversations carry this instead of a listing. */
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "request_id")
+    private ResourceRequest request;
 
     @Column(name = "direct_key", nullable = false, unique = true, length = 120)
     private String directKey;
