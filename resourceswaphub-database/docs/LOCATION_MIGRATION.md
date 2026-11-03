@@ -36,14 +36,24 @@ every boot failed with `Schema validation: missing table [cities]`. Verify befor
 
 ### 2. Import or seed the directory
 
-Cities and districts are never invented, so the level of detail depends on what has been imported.
+Cities are never invented, so the level of detail depends on what has been imported. Districts come
+from the bundled LGD export and are loaded by the same boot runner.
 
 ```bash
-# curated starter set (idempotent top-up on every boot, insert-missing-only, source = CURATED_SEED)
+# boot: LGD district import (once per dataset version), then curated city top-up (insert-missing-only)
 java -jar app.jar
-java -jar app.jar --bookbridge.location.seed=false     # to skip it
+java -jar app.jar --bookbridge.location.seed=false     # to skip both
+```
 
-# authoritative dataset, operator-run
+`LocationSeedRunner` first imports `location-seed/india-lgd-districts.json` — 790 official districts
+with their LGD codes, stamped `source = LGD`, `dataset_version = 2026-11-03` — but only while no
+district row already carries that version, then runs the curated settlement list as an
+insert-missing-only top-up so stored rows are never rewritten. Provenance and conversion details:
+[LOCATION_DATA_SOURCES.md](LOCATION_DATA_SOURCES.md) §2b.
+
+For any other authoritative dataset, the operator-run entry point is explicit:
+
+```bash
 java -jar app.jar \
   --bookbridge.location.import-file=/data/lgd-districts.csv \
   --bookbridge.location.import-source=LGD \
@@ -107,17 +117,24 @@ invariants plus the ambiguous-name cases end to end.
 ### 5. Later (not part of this migration)
 
 Once every deployment has run the import and the backfill reports zero unmatched rows, the
-`city`/`state`/`country` text columns become pure display cache and a future `V10` may read names
+`city`/`state`/`country` text columns become pure display cache and a future version may read names
 from the directory only, or drop the columns. That is intentionally deferred: doing it now would
 break the currently deployed frontend and `ddl-auto: validate`.
+
+Making the district tier selectable is also deferred and is a larger step than it looks: `users`,
+`listings` and `collections` have no `district_id` (V8 defines only `country_id`/`state_id`/`city_id`),
+so it needs a new additive migration — V10 is already taken by the marketplace expansion, so V11 —
+plus a district branch in `LocationService.resolve(...)`, the write DTOs, the discovery filter and the
+shared selector. It also has to merge `Mumbai City` (curated, uncoded) into `Mumbai` (LGD `482`) first,
+or two rows for one place become pickable.
 
 ## Known state of each database
 
 | Database | Version | Notes |
 | --- | --- | --- |
-| local development (`bookbridge`, 127.0.0.1:55432) | V9 | directory seeded, backfill run, unmatched = 0 |
-| test (`bookbridge_test`) | V9 | created by the test suite; the seed runner fills the directory |
-| cloud (Aiven, used by the deployed app) | **V6** | V7–V9 are not applied yet. The packaging defect that caused this is fixed (migrations are now in the backend resources), so the next deploy applies them and seeds the directory automatically |
+| local development (`bookbridge`, 127.0.0.1:55432) | — (0 tables) | the cluster data directory was recreated during unrelated work on 2026-11-03; the next boot applies the migrations and rebuilds the directory from the bundled seeds |
+| test (`bookbridge_test`) | V10 | created by the test suite; the seed runner fills the directory |
+| cloud (Aiven, used by the deployed app) | V9 | reached V9 with the deploy of the packaging fix (history rows 2026-11-01 20:08 UTC) and seeded 36 states / 634 cities automatically. **The 790 LGD districts are not there yet** — they arrive with the next deploy that ships this seed file |
 
 Do not run the backfill against a database that has not reached V9. On the cloud, let the
 deployed app apply V7–V9 first, check `flyway_schema_history` and the seeded directory, and only

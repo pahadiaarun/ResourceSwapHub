@@ -13,4 +13,6 @@ public interface DistrictRepository extends JpaRepository<District, UUID> {
     Optional<District> findFirstByStateIdAndNormalizedName(UUID stateId, String normalizedName);
 
     Optional<District> findFirstByStateIdAndOfficialCode(UUID stateId, String officialCode);
+
+    boolean existsBySourceAndDatasetVersion(String source, String datasetVersion);
 }

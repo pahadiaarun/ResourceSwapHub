@@ -59,7 +59,10 @@ while users point at it, and a "Delhi" in another country would be a different r
 ### `districts`
 
 Same shape as `states`, keyed `UNIQUE (state_id, normalized_name)`, `official_code` reserved for
-LGD codes and left NULL for curated rows.
+LGD codes and left NULL for curated rows. Populated on boot from the bundled LGD export — 790 rows,
+every one coded ([LOCATION_DATA_SOURCES.md](LOCATION_DATA_SOURCES.md) §2b). Nothing references a
+district yet: `users`, `listings` and `collections` carry no `district_id`, so today the tier is
+readable reference data exposed by `GET /api/v1/locations/districts`, not a field a user can set.
 
 ### `cities`
 
