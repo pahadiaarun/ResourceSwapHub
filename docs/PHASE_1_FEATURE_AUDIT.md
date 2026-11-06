@@ -312,3 +312,38 @@ worth reading and still has no endpoint.
 **Production is still running pre-M2 code.** These fixes are local and committed; deploying them is a
 push to `main`, which triggers the deploy that applied V10 on 2026-11-06 — so it happens on the
 owner's word, not as a side effect of a green suite.
+
+## 7. How production actually gets migrated (corrects the §5.4 inference)
+
+§5.4 concluded that V10 reaching production "means a deploy happened". Measured now, **there is no
+deploy path in this workspace**, so that inference was wrong and the consequence is more serious than
+a routine release:
+
+| Check | Result |
+|---|---|
+| `.github/workflows/` | only `ci.yml` — backend tests, frontend lint/build, `docker build`. **No deploy job, no publish step, no secrets for a host.** |
+| `resourceswaphub-backend/.env` | `BOOKBRIDGE_DB_URL` is the Aiven production DSN, `avnadmin`. The "Production deployment overrides" block (`COOKIE_SECURE`, public CORS/origins, storage dir) is **commented out** — this file is configured for a local run against the production database. |
+| `resourceswaphub-frontend` | `next.config.ts:17-23` rewrites `/api/v1/*` to `BACKEND_URL ?? http://127.0.0.1:8080`; `.env` leaves `BACKEND_URL` commented ("Set these on the Vercel project"). |
+| Processes and ports | nothing listens on :8080 or :3000; the only listener is the local PostgreSQL on 127.0.0.1:55432 |
+| Production schema today | **V11** (read-only measured at 2026-11-06 15:22 UTC), `resource_reports` 0, `listing_status_history` 0, `ADMIN` users 0 |
+
+`application.yml` runs Flyway at startup and `spring.jpa.hibernate.ddl-auto: validate`, so **any local
+`make api` that sources `.env` migrates the production database the moment it boots**. That is what
+applied V10 at 14:42:48 and V11 at 14:59:33, minutes after the commits reached `origin/main` — the
+same minutes a verification boot would happen. It also explains the contradiction in
+`PRODUCTION_TEST_DATA_AUDIT.md`: it records the application at `66ed210`, a commit that predates the
+V11 file it says production applied. A deployed build could not do that; a local boot of a newer tree
+can.
+
+Consequences, in priority order:
+
+1. **M2 is not "waiting to deploy" — it is already live the moment anyone runs `make api`.** There is
+   no gate between a commit and the production schema.
+2. **The next destructive migration is the risk.** Nothing here stops `make api` from applying a V12
+   with a `DROP COLUMN` to Aiven. Any non-additive migration must be rehearsed on the restored
+   snapshot (see `PRODUCTION_CLEANUP_BACKUP_AND_RECOVERY.md`) *before* anyone boots the API, and the
+   safe habit is to point a local run at the local database instead of the `.env` default.
+3. **The site has no backend host configured in this workspace.** If a Vercel frontend is published,
+   its `/api/v1` calls need a `BACKEND_URL` set in the Vercel project — outside what these files can
+   show. Confirming that is the remaining half of the "how does this ship" question, and it needs the
+   owner's answer, not more local inspection.
