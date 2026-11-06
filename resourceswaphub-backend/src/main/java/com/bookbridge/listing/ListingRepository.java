@@ -94,7 +94,7 @@ public interface ListingRepository extends JpaRepository<Listing, UUID> {
                    OR lower(coalesce(l.locality, '')) = lower(CAST(:locality AS text)))
             ORDER BY
               CASE WHEN :sortCode = 1 THEN l.created_at END ASC NULLS LAST,
-              CASE WHEN :sortCode = 2 THEN l.price END ASC NULLS LAST,
+              CASE WHEN :sortCode = 2 THEN l.price END ASC NULLS FIRST,
               CASE WHEN :sortCode = 3 THEN l.price END DESC NULLS LAST,
               l.created_at DESC, l.id DESC
             """, nativeQuery = true)
