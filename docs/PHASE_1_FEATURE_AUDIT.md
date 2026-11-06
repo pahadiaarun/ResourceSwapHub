@@ -205,10 +205,11 @@ Recorded here so they are not lost; none is fixed yet.
 
 ### 5.4 Production reality (measured 2026-11-06, read-only queries)
 
-**Production is at V11-pending / V10-applied, not V9.** The plan and §5.3 both assumed V10 had never
+**Production is at V11, not V9 and not "V11-pending".** The plan and §5.3 both assumed V10 had never
 run there. It has: `flyway_schema_history` rank 10, `success=t`, checksum `-2140867330` (exactly the
 committed file), `installed_on = 2026-11-06 14:42:48` — four minutes after the Phase 1 commits reached
-`origin/main`, so the deployed backend migrates at boot and a deploy happened.
+`origin/main`. ~~so the deployed backend migrates at boot and a deploy happened~~ — **wrong, corrected
+in §7: there is no deploy path. A local boot against the Aiven DSN in `.env` applied it.**
 
 | Check | Result |
 |---|---|
@@ -224,10 +225,11 @@ committed file), `installed_on = 2026-11-06 14:42:48` — four minutes after the
 | `listing_status_history` | **0** despite 3 non-AVAILABLE listings — transitions predate the audit trail, so history starts today rather than covering existing data |
 
 Consequences for the plan: M1's prodlike rehearsal of V10 is **moot** — the risky migration already
-succeeded against real data. What replaces it is (a) getting the §5.1 fix deployed, since production is
-running the defective create path right now, and (b) treating D1 as pre-launch work: the anonymous
-request feed has no data behind it yet, so requiring sign-in costs nothing today and would be a
-privacy incident once students start posting.
+succeeded against real data. What replaces it is (a) getting the §5.1 fix ~~deployed, since production
+is running the defective create path right now~~ — corrected in §7: no app is deployed or running, so
+the fix lands the next time the API boots against Aiven — and (b) treating D1 as pre-launch work: the
+anonymous request feed has no data behind it yet, so requiring sign-in costs nothing today and would
+be a privacy incident once students start posting.
 
 ### 5.5 M1 deliverables
 
@@ -309,9 +311,9 @@ D6–D12 and D14–D15 are untouched and stay exactly as listed in §5.2 — the
 urgent rather than less: `listing_status_history` now has a real `MODERATION` writer, so the table is
 worth reading and still has no endpoint.
 
-**Production is still running pre-M2 code.** These fixes are local and committed; deploying them is a
-push to `main`, which triggers the deploy that applied V10 on 2026-11-06 — so it happens on the
-owner's word, not as a side effect of a green suite.
+**Nothing has run the M2 code yet.** There is no deploy step to wait for — §7 — so these fixes reach
+the production database the next time the API boots against it, and the API is not running now. That
+is why the push/deploy question below is about a boot, not a release pipeline.
 
 ## 7. How production actually gets migrated (corrects the §5.4 inference)
 
