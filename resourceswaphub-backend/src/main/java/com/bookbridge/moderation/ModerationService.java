@@ -11,6 +11,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.bookbridge.listing.Listing;
 import com.bookbridge.listing.ListingRepository;
+import com.bookbridge.listing.ListingService;
+import com.bookbridge.listing.ListingStatus;
 import com.bookbridge.listing.ModerationState;
 import com.bookbridge.shared.api.PageResponse;
 import com.bookbridge.shared.error.ApiException;
@@ -27,23 +29,26 @@ public class ModerationService {
     private final ResourceReportRepository reportRepository;
     private final ModerationActionRepository actionRepository;
     private final ListingRepository listingRepository;
+    private final ListingService listingService;
     private final UserService userService;
 
     public ModerationService(ResourceReportRepository reportRepository,
                              ModerationActionRepository actionRepository,
-                             ListingRepository listingRepository, UserService userService) {
+                             ListingRepository listingRepository, ListingService listingService,
+                             UserService userService) {
         this.reportRepository = reportRepository;
         this.actionRepository = actionRepository;
         this.listingRepository = listingRepository;
+        this.listingService = listingService;
         this.userService = userService;
     }
 
     // ------------------------------------------------------------------ reports
 
     @Transactional
-    public ResourceReport createReport(UUID reporterId, UUID listingId, ReportReason reason, String details) {
+    public ReportListDto createReport(UUID reporterId, UUID listingId, ReportReason reason, String details) {
         User reporter = userService.require(reporterId);
-        Listing listing = listingRepository.findById(listingId)
+        Listing listing = listingRepository.findWithDetailsById(listingId)
                 .orElseThrow(() -> ApiException.notFound("That listing could not be found."));
         if (listing.getOwner().getId().equals(reporterId)) {
             throw ApiException.badRequest("OWN_LISTING", "You cannot report your own listing.");
@@ -59,7 +64,9 @@ public class ModerationService {
         report.setReporter(reporter);
         report.setReason(reason);
         report.setDetails(trim(details, 1000));
-        return reportRepository.saveAndFlush(report);
+        // Mapped here, not in the controller: the associations are lazy, so a detached
+        // report can only be read inside this transaction.
+        return ReportListDto.from(reportRepository.saveAndFlush(report));
     }
 
     @Transactional(readOnly = true)
@@ -74,7 +81,7 @@ public class ModerationService {
 
     /** Marks the report reviewed / actioned / dismissed (admin only). */
     @Transactional
-    public ResourceReport resolve(UUID adminId, UUID reportId, ReportStatus status) {
+    public ReportListDto resolve(UUID adminId, UUID reportId, ReportStatus status) {
         requireAdmin(adminId);
         ResourceReport report = reportRepository.findById(reportId)
                 .orElseThrow(() -> ApiException.notFound("That report could not be found."));
@@ -84,7 +91,7 @@ public class ModerationService {
         report.setStatus(status);
         report.setReviewedBy(userService.require(adminId));
         report.setResolvedAt(Instant.now());
-        return reportRepository.saveAndFlush(report);
+        return ReportListDto.from(reportRepository.saveAndFlush(report));
     }
 
     // --------------------------------------------------------------- moderation
@@ -100,14 +107,12 @@ public class ModerationService {
             case REMOVE -> ModerationState.REMOVED;
             case RESTORE -> ModerationState.NONE;
         };
-        if (action == ModerationActionType.REMOVE) {
-            // Hide immediately but keep the status audit trail in the listing's own history.
-            listing.setModerationState(ModerationState.REMOVED);
-        } else {
-            listing.setModerationState(target);
-        }
-        if (action != ModerationActionType.RESTORE) {
-            listing.setStatus(listing.getStatus());
+        listing.setModerationState(target);
+        if (action == ModerationActionType.REMOVE && listing.getStatus() == ListingStatus.AVAILABLE) {
+            // A takedown that skips transition() hides the listing but leaves no entry in its
+            // status history and never tells the students who saved it. EXCHANGED and WITHDRAWN
+            // listings have no legal path to UNAVAILABLE, and REMOVED already hides them.
+            listingService.transition(listing, ListingStatus.UNAVAILABLE, admin, "MODERATION");
         }
         listingRepository.saveAndFlush(listing);
 

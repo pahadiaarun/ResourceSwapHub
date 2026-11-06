@@ -250,3 +250,65 @@ local test database (guard raised `Set target_email to a real registered account
 account was promoted to ADMIN and the row count confirmed, then reverted). It is not an endpoint
 because an API that grants ADMIN is a self-escalation surface, and not a migration because a migration
 cannot know who the operator is.
+
+## 6. M2 measured (2026-11-06)
+
+`./mvnw -o test` against the local `bookbridge_test` database, V1–V11 applied: **40/40 pass, BUILD
+SUCCESS** — the 34 M0 tests plus 6 new ones in `Phase1MustFixIntegrationTest`, one per must-fix
+defect plus the two that only appeared once the endpoints were actually called.
+
+Environment moved forward too: local `bookbridge` went V10 → V11 **through the real boot path**
+(`BOOKBRIDGE_TEST_DB_URL` pointed at it, `BookBridgeApplicationTests` started the context), and
+`make db-seed` then applied `catalogue.sql` + `demo.sql` without error. Local `bookbridge` is now
+prod-shaped and seeded, which is what the browser verification in M4–M9 needs.
+
+### 6.1 Closed in M2
+
+| # | Fix | Verified by |
+|---|---|---|
+| D0 | `GET /media/{id}` sends `Cache-Control: no-store` for a DOCUMENT and keeps `public, immutable` for listing images (`shared/media/MediaController.java:57-63`) | image stays publicly cacheable to a guest; the authorized document and the `/file` download are not |
+| D1 | `/api/v1/resource-requests/**` requires a session (`config/SecurityConfig.java:51`); listing, discovery and category browse keep their anonymous GETs | feed, detail and `mine` each refused anonymously; the three public browse routes still 200 |
+| D2 | Takedown goes through `ListingService.transition(..., "MODERATION")` (`moderation/ModerationService.java:113-116`) instead of `setStatus(getStatus())` | one `listing_status_history` row `AVAILABLE → UNAVAILABLE` with `changed_by` = the admin, one `SAVED_LISTING_UNAVAILABLE` notification for the saver and no one else, 404 for guests and students |
+| D3 | The category predicate moved into SQL (`saved/SavedService.java:88-90`, `SavedResourceRepository.findForUserInCategory`) | `size=2` under a 3-row category: content 2, `totalElements` 3, `totalPages` 2, second page 1 item, every row on the page in the requested category |
+| D4 | Closed in M1 by `bootstrap_admin.sql`; the tests promote with the same SQL (`UPDATE users SET role = 'ADMIN'`) so the gate is exercised the way production will | non-admin signed-in user gets 403 on `/admin/reports`, admin gets 200 |
+| D5 | `demo.sql` no longer writes the dropped `listings.collection_id`; it writes `category_id` + `medium` the way `resolveShape` does and expresses membership through `collection_items` | seed applied to a V11 database: 10 listings, 0 without a category, 0 without a medium, 4 `collection_items`, both demo collections PUBLIC |
+| D13 | `request/RequesterDto.java` (id, displayName, avatarUrl, city) replaces the reused `SellerDto` | request card carries no `locality` and no seller-only fields |
+
+One deliberate design point recorded here: **RESTORE clears the moderation state and leaves the
+listing `UNAVAILABLE`**. Returning it to AVAILABLE automatically would also relist a book that the
+owner had personally marked UNAVAILABLE before the report, and re-fires the alert fan-out. The owner
+pushes it back into circulation.
+
+### 6.2 Two 500s that only running the endpoints could find
+
+Both are in the §4.2 "implemented but NOT tested" column, and both were live defects, not
+hypothetical ones.
+
+1. **D17 — reporting has never worked for a book listing.** `POST /reports` and
+   `PATCH /admin/reports/{id}` assembled `ReportListDto` in the controller *after* the service
+   transaction had closed, so reading `report.getListing().getBook().getTitle()` — a LAZY proxy —
+   threw `LazyInitializationException` and returned `INTERNAL_ERROR`. Production has 11 book-anchored
+   listings and 0 `resource_reports`, which is consistent with every report attempt having failed.
+   Fixed by mapping inside the transaction and returning the DTO
+   (`moderation/ModerationService.java:69`, `:94`, listing fetched with `findWithDetailsById`);
+   `AdminReportController`'s now-unused `UserService` dependency was deleted rather than left behind.
+2. **D18 — reading a request 500'd once it was past its deadline.** `ResourceRequestService.get`
+   was `@Transactional(readOnly = true)` but called `expireDue()`, whose
+   `UPDATE resource_requests … status='EXPIRED'` Postgres refuses inside a read-only transaction.
+   Now it expires first, then reads, in a read-write transaction
+   (`request/ResourceRequestService.java:159-166`). This also covers the write path §5.2/D10 wanted
+   asserted: a request forced past `expires_at` is reported and stored as `EXPIRED` by the read.
+3. **D16 — the §4.1 lesson was still live in one place.** `ResourceRequestCreateRequest.freeOnly`
+   was a primitive `boolean`, so omitting it makes Jackson fail to bind the body — the exact create
+   path that broke every listing POST in M0. Now `Boolean`, read as `Boolean.TRUE.equals(...)`; the
+   test creates a request without the field and gets 201.
+
+### 6.3 Still open
+
+D6–D12 and D14–D15 are untouched and stay exactly as listed in §5.2 — they are M3. D15 got more
+urgent rather than less: `listing_status_history` now has a real `MODERATION` writer, so the table is
+worth reading and still has no endpoint.
+
+**Production is still running pre-M2 code.** These fixes are local and committed; deploying them is a
+push to `main`, which triggers the deploy that applied V10 on 2026-11-06 — so it happens on the
+owner's word, not as a side effect of a green suite.

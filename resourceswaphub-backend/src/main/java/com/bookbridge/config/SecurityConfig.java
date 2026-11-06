@@ -46,9 +46,12 @@ public class SecurityConfig {
                         // Digital resource files always require a signed-in viewer; the
                         // more specific rule must come before the generic listing browse rule.
                         .requestMatchers(HttpMethod.GET, "/api/v1/listings/*/file").authenticated()
+                        // A request names a person, so the feed is not guest content: it stays
+                        // out of the open-browse rule below and falls through to anyRequest().
+                        .requestMatchers("/api/v1/resource-requests/**").authenticated()
                         // Browsing is open to guests; every write still requires a signed-in owner.
                         .requestMatchers(HttpMethod.GET, "/api/v1/discovery/**", "/api/v1/listings/**",
-                                "/api/v1/collections/**", "/api/v1/resource-requests/**", "/api/v1/categories/**",
+                                "/api/v1/collections/**", "/api/v1/categories/**",
                                 "/api/v1/catalog/**", "/api/v1/institutions/**",
                                 "/api/v1/locations/**").permitAll()
                         .requestMatchers("/ws/**").permitAll()

@@ -18,13 +18,10 @@ import com.bookbridge.moderation.ModerationService;
 import com.bookbridge.moderation.ReportListDto;
 import com.bookbridge.moderation.ReportReason;
 import com.bookbridge.moderation.ReportStatus;
-import com.bookbridge.moderation.ResourceReport;
 import com.bookbridge.shared.api.ApiResponse;
 import com.bookbridge.shared.api.PageResponse;
 import com.bookbridge.shared.error.ApiException;
 import com.bookbridge.shared.security.SecurityUtils;
-import com.bookbridge.user.User;
-import com.bookbridge.user.UserService;
 
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
@@ -39,33 +36,18 @@ import jakarta.validation.constraints.NotNull;
 public class AdminReportController {
 
     private final ModerationService moderationService;
-    private final UserService userService;
 
-    public AdminReportController(ModerationService moderationService, UserService userService) {
+    public AdminReportController(ModerationService moderationService) {
         this.moderationService = moderationService;
-        this.userService = userService;
     }
 
     // ------------------------------------------------------------ user reports
 
     @PostMapping("/reports")
     public ResponseEntity<ApiResponse<ReportListDto>> report(@Valid @RequestBody ReportRequest request) {
-        ResourceReport report = moderationService.createReport(
+        ReportListDto report = moderationService.createReport(
                 SecurityUtils.currentUserId(), request.listingId(), request.reason(), request.details());
-        User reporter = userService.require(report.getReporter().getId());
-        return ResponseEntity.status(HttpStatus.CREATED)
-                .body(ApiResponse.ok(new ReportListDto(
-                        report.getId(),
-                        report.getListing().getId(),
-                        report.getListing().getBook() != null
-                                ? report.getListing().getBook().getTitle()
-                                : report.getListing().getTitle(),
-                        reporter.getId(),
-                        reporter.getDisplayName(),
-                        report.getReason().name(),
-                        report.getDetails(),
-                        report.getStatus().name(),
-                        report.getCreatedAt())));
+        return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.ok(report));
     }
 
     // --------------------------------------------------------- admin endpoints
@@ -81,20 +63,8 @@ public class AdminReportController {
     @PatchMapping("/admin/reports/{id}")
     public ApiResponse<ReportListDto> resolve(@PathVariable UUID id,
                                                @Valid @RequestBody ResolveRequest request) {
-        ResourceReport report = moderationService.resolve(SecurityUtils.currentUserId(), id, request.status());
-        return ApiResponse.ok(new ReportListDto(
-                report.getId(),
-                report.getListing().getId(),
-                report.getListing().getBook() != null
-                        ? report.getListing().getBook().getTitle()
-                        : report.getListing().getTitle(),
-                report.getReporter().getId(),
-                report.getReporter().getDisplayName(),
-                report.getReason().name(),
-                report.getDetails(),
-                report.getStatus().name(),
-                report.getCreatedAt()
-        ));
+        return ApiResponse.ok(moderationService.resolve(
+                SecurityUtils.currentUserId(), id, request.status()));
     }
 
     @PostMapping("/admin/listings/{id}/moderation")

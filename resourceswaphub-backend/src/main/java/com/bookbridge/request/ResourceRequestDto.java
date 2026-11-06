@@ -6,12 +6,11 @@ import java.util.List;
 import java.util.UUID;
 
 import com.bookbridge.category.ResourceCategoryDto;
-import com.bookbridge.listing.SellerDto;
 import com.bookbridge.location.LocationDto;
 
 public record ResourceRequestDto(
         UUID id,
-        SellerDto requester,
+        RequesterDto requester,
         String title,
         String description,
         ResourceCategoryDto category,

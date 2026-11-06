@@ -71,7 +71,7 @@ public class ResourceRequestService {
         entity.setCategory(category);
         applyFields(entity, request.title(), request.description(), request.subject(), request.author(),
                 request.edition(), request.academicLevel(), request.preferredCondition(), request.priceMin(),
-                request.priceMax(), request.freeOnly(), ShapedLocation.of(request), requester);
+                request.priceMax(), Boolean.TRUE.equals(request.freeOnly()), ShapedLocation.of(request), requester);
         entity.setStatus(RequestStatus.OPEN);
         int days = request.expiresInDays() == null ? DEFAULT_EXPIRY_DAYS
                 : Math.max(1, Math.min(request.expiresInDays(), MAX_EXPIRY_DAYS));
@@ -156,11 +156,13 @@ public class ResourceRequestService {
         requestRepository.delete(entity);
     }
 
-    @Transactional(readOnly = true)
+    @Transactional
     public ResourceRequestDto get(UUID requestId, UUID viewerId) {
+        // Lazy expiry writes, so this read cannot be declared readOnly: a read-only
+        // transaction turns the routine housekeeping into a 500.
+        expireDue();
         ResourceRequest entity = requestRepository.findById(requestId)
                 .orElseThrow(() -> ApiException.notFound("That request could not be found."));
-        expireDue();
         return toDto(entity, viewerId, List.of());
     }
 
@@ -330,7 +332,7 @@ public class ResourceRequestService {
                                      List<UUID> conversationIds) {
         return new ResourceRequestDto(
                 entity.getId(),
-                com.bookbridge.listing.SellerDto.from(entity.getRequester()),
+                RequesterDto.from(entity.getRequester()),
                 entity.getTitle(),
                 entity.getDescription(),
                 entity.getCategory() == null

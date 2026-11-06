@@ -35,7 +35,7 @@ public record ResourceRequestCreateRequest(
         @DecimalMin(value = "0.01", message = "Price must be greater than zero")
         @Digits(integer = 8, fraction = 2, message = "Enter a valid price")
         BigDecimal priceMax,
-        boolean freeOnly,
+        Boolean freeOnly,
         UUID countryId,
         UUID stateId,
         UUID cityId,

@@ -54,9 +54,14 @@ public class MediaController {
             mediaService.authorizeDocumentAccess(id, viewerId);
         }
         Resource resource = mediaService.load(asset);
+        CacheControl caching = asset.getPurpose() == MediaPurpose.DOCUMENT
+                // Authorization decides visibility, so the response is per-viewer and must not
+                // outlive it in a shared cache.
+                ? CacheControl.noStore()
+                : CacheControl.maxAge(Duration.ofDays(365)).cachePublic().immutable();
         return ResponseEntity.ok()
                 .contentType(MediaType.parseMediaType(asset.getContentType()))
-                .cacheControl(CacheControl.maxAge(Duration.ofDays(365)).cachePublic().immutable())
+                .cacheControl(caching)
                 .header("X-Content-Type-Options", "nosniff")
                 .header(HttpHeaders.CONTENT_DISPOSITION, "inline")
                 .body(resource);

@@ -85,13 +85,10 @@ public class SavedService {
     @Transactional(readOnly = true)
     public PageResponse<SavedResourceDto> myListings(UUID userId, UUID categoryId, int page, int size) {
         Pageable pageable = PageRequest.of(Math.max(0, page), Math.max(1, Math.min(size, 48)));
-        Page<SavedResource> result = savedResourceRepository.findForUser(userId, pageable);
-        List<SavedResource> visible = result.getContent().stream()
-                .filter(saved -> categoryId == null
-                        || (saved.getListing().getCategory() != null
-                                && saved.getListing().getCategory().getId().equals(categoryId)))
-                .toList();
-        List<SavedResourceDto> content = visible.stream()
+        Page<SavedResource> result = categoryId == null
+                ? savedResourceRepository.findForUser(userId, pageable)
+                : savedResourceRepository.findForUserInCategory(userId, categoryId, pageable);
+        List<SavedResourceDto> content = result.getContent().stream()
                 .map(saved -> SavedResourceDto.from(saved, listingMapper.toDto(saved.getListing())))
                 .toList();
         return new PageResponse<>(content, Math.max(0, page), Math.max(1, Math.min(size, 48)),

@@ -17,6 +17,13 @@ public interface SavedResourceRepository extends JpaRepository<SavedResource, Sa
     @Query("select s from SavedResource s where s.user.id = :userId order by s.createdAt desc")
     Page<SavedResource> findForUser(@Param("userId") UUID userId, Pageable pageable);
 
+    @EntityGraph(attributePaths = {"listing", "listing.book", "listing.category"})
+    @Query("select s from SavedResource s where s.user.id = :userId "
+            + "and s.listing.category.id = :categoryId order by s.createdAt desc")
+    Page<SavedResource> findForUserInCategory(@Param("userId") UUID userId,
+                                              @Param("categoryId") UUID categoryId,
+                                              Pageable pageable);
+
     Optional<SavedResource> findByUserIdAndListingId(UUID userId, UUID listingId);
 
     @Query("select s.user.id from SavedResource s where s.listing.id = :listingId")
