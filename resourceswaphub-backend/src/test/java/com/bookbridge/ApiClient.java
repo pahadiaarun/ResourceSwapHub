@@ -5,6 +5,8 @@ import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.time.Duration;
+import java.util.Map;
+import java.util.UUID;
 
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.json.JsonMapper;
@@ -45,6 +47,44 @@ final class ApiClient {
 
     ApiCall post(String path, Object body, String token) {
         return send("POST", path, toJson(body), token, null);
+    }
+
+    /** Multipart upload for the media endpoints, which do not accept JSON. */
+    ApiCall postMultipart(String path, String token, String filename, String contentType,
+                          byte[] bytes, Map<String, String> fields) {
+        String boundary = "bb-" + UUID.randomUUID();
+        java.io.ByteArrayOutputStream out = new java.io.ByteArrayOutputStream();
+        try {
+            for (Map.Entry<String, String> field : fields.entrySet()) {
+                out.write(("--" + boundary + "\r\nContent-Disposition: form-data; name=\""
+                        + field.getKey() + "\"\r\n\r\n" + field.getValue() + "\r\n")
+                        .getBytes(java.nio.charset.StandardCharsets.UTF_8));
+            }
+            out.write(("--" + boundary + "\r\nContent-Disposition: form-data; name=\"file\"; filename=\""
+                    + filename + "\"\r\nContent-Type: " + contentType + "\r\n\r\n")
+                    .getBytes(java.nio.charset.StandardCharsets.UTF_8));
+            out.write(bytes);
+            out.write(("\r\n--" + boundary + "--\r\n").getBytes(java.nio.charset.StandardCharsets.UTF_8));
+        } catch (java.io.IOException ex) {
+            throw new IllegalStateException("Could not build multipart body", ex);
+        }
+        HttpRequest.Builder builder = HttpRequest.newBuilder()
+                .uri(URI.create(baseUrl + path))
+                .timeout(Duration.ofSeconds(15))
+                .header("Content-Type", "multipart/form-data; boundary=" + boundary)
+                .method("POST", HttpRequest.BodyPublishers.ofByteArray(out.toByteArray()));
+        if (token != null) {
+            builder.header("Authorization", "Bearer " + token);
+        }
+        try {
+            HttpResponse<String> response = client.send(builder.build(), HttpResponse.BodyHandlers.ofString());
+            JsonNode parsed = response.body() == null || response.body().isBlank()
+                    ? null
+                    : JSON.readTree(response.body());
+            return new ApiCall(response.statusCode(), parsed, response.headers());
+        } catch (Exception ex) {
+            throw new IllegalStateException("POST " + path + " failed", ex);
+        }
     }
 
     ApiCall postWithCookie(String path, Object body, String cookie) {
@@ -101,12 +141,18 @@ final class ApiClient {
         try {
             HttpResponse<String> response = client.send(builder.build(),
                     HttpResponse.BodyHandlers.ofString());
-            JsonNode parsed = response.body() == null || response.body().isBlank()
-                    ? null
-                    : JSON.readTree(response.body());
+            JsonNode parsed = isJson(response.headers().firstValue("Content-Type").orElse(""))
+                    && response.body() != null && !response.body().isBlank()
+                    ? JSON.readTree(response.body())
+                    : null;
             return new ApiCall(response.statusCode(), parsed, response.headers());
         } catch (Exception ex) {
             throw new IllegalStateException(method + " " + path + " failed", ex);
         }
+    }
+
+    /** File downloads answer with the asset's own content type, which is not parseable as JSON. */
+    private static boolean isJson(String contentType) {
+        return contentType.startsWith("application/json") || contentType.startsWith("application/problem+json");
     }
 }
