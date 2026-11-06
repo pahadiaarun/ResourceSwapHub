@@ -210,18 +210,6 @@ public class ListingService {
             listingImageRepository.flush();
             attachImages(listing, request.imageIds(), userId, true);
         }
-        listing.setOwnerRightsConfirmed(shape.ownerRightsConfirmed());
-        if (shape.digitalMediaId() != null) {
-            MediaAsset asset = mediaService.getRequired(shape.digitalMediaId());
-            listing.setDigitalMedia(asset);
-            listing.setFileFormat(fileExtension(asset));
-            listing.setFileSizeBytes(asset.getSizeBytes());
-        } else {
-            listing.setDigitalMedia(null);
-            listing.setFileFormat(null);
-            listing.setFileSizeBytes(null);
-        }
-        listing.setExternalUrl(shape.externalUrl());
         listingRepository.saveAndFlush(listing);
         return mapper.toDto(listing);
     }
@@ -459,6 +447,18 @@ public class ListingService {
         listing.setPublicationYear(publicationYear == null ? null : publicationYear.shortValue());
         listing.setCondition(shape.condition());
         listing.setMedium(shape.medium());
+        listing.setOwnerRightsConfirmed(shape.ownerRightsConfirmed());
+        if (shape.digitalMediaId() != null) {
+            MediaAsset asset = mediaService.getRequired(shape.digitalMediaId());
+            listing.setDigitalMedia(asset);
+            listing.setFileFormat(fileExtension(asset));
+            listing.setFileSizeBytes(asset.getSizeBytes());
+        } else {
+            listing.setDigitalMedia(null);
+            listing.setFileFormat(null);
+            listing.setFileSizeBytes(null);
+        }
+        listing.setExternalUrl(shape.externalUrl());
     }
 
     private void applyOfferFields(Listing listing, PriceType priceType, BigDecimal price, String locality,
