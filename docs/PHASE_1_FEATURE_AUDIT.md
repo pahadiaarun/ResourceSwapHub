@@ -107,15 +107,16 @@ Every number here comes from an executed run, not from inspection.
 
 ### 4.2 What is implemented but NOT tested
 
-The committed Phase 1 backend has **no test coverage of its own**. The green 28 only proves the
-pre-Phase-1 journeys still work plus the listing/collection contract repairs above. Untested:
+**Corrected in §5:** the blanket "no test coverage of its own" below was already wrong when it was
+written — `Phase1MarketplaceIntegrationTest` (6 tests) covers the first four rows. The remaining rows
+are genuinely uncovered.
 
 | Area | Endpoints / behaviour with zero tests |
 |---|---|
-| Categories | `GET /api/v1/categories`, category-anchored listing create, conditional metadata rules |
-| Digital resources | `DOCUMENT` media purpose, upload type/size limits, `GET /api/v1/listings/{id}/file` authorization, rights confirmation gate |
-| Bulk create | idempotency via `client_ref`, per-item isolation, 20-item and 100-per-day caps |
-| Collections | multi-membership through `collection_items`, item add/remove, public browse, visibility |
+| Categories | Covered — `Phase1MarketplaceIntegrationTest` (directory, conditional metadata) |
+| Digital resources | Covered — rights gate, DOCUMENT upload, download authorization |
+| Bulk create | Covered — per-item isolation, `client_ref` replay, size cap |
+| Collections | Multi-membership through `collection_items`, item add/remove, public browse, visibility |
 | Requests | create/match/fulfil/cancel, expiry scheduler, chat linkage |
 | Saved | save/unsave idempotency, notification on save and on status change |
 | Alerts | dedupe on create, synchronous match on publish, notification fan-out |
@@ -131,6 +132,73 @@ Each row needs an integration test before the feature can be reported as passed.
   for categories, requests, saved, alerts, notifications, exchanges or reports; no screens exist;
   the nav in `components/app-shell.tsx` has no new entries. Nothing in Phase 1 is user-reachable.
 - **Docs**: only this audit file exists; the remaining Phase 1 documents are not written.
-- **Environment**: the local dev database `bookbridge` was reset and is empty, `bookbridge_test`
-  carries a V10 checksum mismatch from an edited migration, and the local API (:8080) and
-  frontend (:3000) are both stopped — so browser verification of any of this is not yet possible.
+
+## 5. M0 baseline (measured, 2026-11-06)
+
+`./mvnw -o test` against the local `bookbridge_test` database, V1–V10 applied: **34/34 pass, BUILD
+SUCCESS** (the 28 pre-Phase-1 tests plus the 6 in `Phase1MarketplaceIntegrationTest`).
+
+Two earlier claims in this file are now retired with evidence:
+
+1. **There is no V10 checksum mismatch.** Flyway validates stored checksums on every test boot, so a
+   mismatch would fail the whole suite at context startup; the suite starts and passes. Independently,
+   `V10__phase1_marketplace_expansion.sql` has exactly one commit (`b7d2cdc`) and a clean working tree,
+   so it was never edited after being applied.
+2. **"No test coverage of its own" was stale** — see §4.2.
+
+### 5.1 Two real defects the first M0 run exposed, and what they mean
+
+The suite was **not** green when M0 began: 2 of the 6 Phase 1 tests failed. One was a test-fixture bug;
+one was a product defect that made Feature B unusable on its main path.
+
+1. **Creating a digital listing silently discarded the resource.** `ListingService.applyMetadata`
+   assigned `medium` but never `externalUrl`, `digitalMedia` (with `fileFormat`/`fileSizeBytes`) or
+   `ownerRightsConfirmed` — those assignments existed only in the update path. So `POST /listings` with
+   `medium=EXTERNAL_LINK` produced a listing with **no link**, and `medium=DIGITAL_FILE` produced a
+   listing with **no file**, whose `GET /listings/{id}/file` could only ever 404, and whose
+   `owner_rights_confirmed` stayed `false` even though `RIGHTS_CONFIRMATION_REQUIRED` had to be
+   satisfied to pass validation. The copyright audit field was therefore also untrustworthy. Fixed by
+   moving the three assignments into `applyMetadata`, which both create and update call, and deleting
+   the now-duplicated block from the update path so the two cannot drift apart again.
+2. **A fake JPEG shorter than the validator's 12-byte floor** was rejected as `UNSUPPORTED_IMAGE`,
+   failing the test rather than proving anything about the product. Replaced with a 12-byte
+   SOI+APP0+JFIF header, which the magic-byte check accepts, so the assertion under it ("an image
+   cannot be attached as a digital document") actually tests the rule.
+
+The `ApiClient` harness also needed to stop assuming every response is JSON: a successful file
+download returns the asset's own content type, and the unconditional `readTree` threw
+`StreamReadException` on the binary body. It now parses only `application/json` responses.
+
+### 5.2 Open defects carried into M2/M3
+
+Recorded here so they are not lost; none is fixed yet.
+
+| # | Defect | Location |
+|---|---|---|
+| D0 | `GET /media/{id}` serves an authorized DOCUMENT as `Cache-Control: public, max-age=31536000, immutable` — cacheable by shared caches | `shared/media/MediaController.java:57` |
+| D1 | `GET /resource-requests` is `permitAll` and returns requester name + city | `config/SecurityConfig.java:51` |
+| D2 | Admin takedown calls `setStatus(getStatus())` (no-op) and bypasses `transition()` → no history row, no saver notification | `moderation/ModerationService.java:106` |
+| D3 | Saved-resources category filter runs after pagination; `totalElements`/`totalPages` are the unfiltered values | `saved/SavedService.java:88-98` |
+| D4 | No path grants `ADMIN`, so report/review/takedown is unreachable | `user/User.java:81` |
+| D5 | `demo.sql` still inserts the dropped `listings.collection_id` | `seeds/development/demo.sql:26` |
+| D6 | `alertRepository.findAll()` per publish | `alerts/AlertService.java:115` |
+| D7 | Alert dedupe silences a legitimate re-publish forever | `alerts/AlertService.java:122` |
+| D8 | `notifications?unread=false` returns everything | `notification/NotificationService.java:64` |
+| D9 | `ResourceRequestDto.conversationIds` always `List.of()` | `request/ResourceRequestService.java` |
+| D10 | Expiry write path not asserted when the scheduler never fires | `request/RequestExpiryScheduler.java:22` |
+| D11 | Saving a PRIVATE collection returns a bare 404 | `saved/SavedService.java` |
+| D12 | Duplicate `import java.util.Locale` | `collection/CollectionService.java:5` |
+| D13 | Request feed reuses `SellerDto` as `requester` | `request/ResourceRequestDto.java` |
+| D14 | Alert fan-out runs inside the publish transaction (`BEFORE_COMMIT`) | `alerts/AlertService.java:102` |
+| D15 | `listing_status_history` is written but has no reader or endpoint | `listing/ListingService.java:541` |
+
+### 5.3 Environment reality at M0
+
+- Local `bookbridge` is **unmigrated** (0 relations) — there is no local prod-shaped data, so the V10
+  backfills (`:137` category, `:172` collection_items) have never run against real rows. This is the
+  single biggest reason M1 rehearses on a restored production copy.
+- `bookbridge_test`, `bookbridge_p1_final` and `bookbridge_phase1_check` all carry V1–V10 with matching
+  checksums.
+- API :8080 and web :3000 are stopped; Docker is unavailable, so `make db` + `make api` + `make web`
+  is the only local path.
+- Production is at **V9**; V10 has never run there, and `main` is ahead of `origin/main`.
