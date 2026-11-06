@@ -194,11 +194,59 @@ Recorded here so they are not lost; none is fixed yet.
 
 ### 5.3 Environment reality at M0
 
-- Local `bookbridge` is **unmigrated** (0 relations) — there is no local prod-shaped data, so the V10
-  backfills (`:137` category, `:172` collection_items) have never run against real rows. This is the
-  single biggest reason M1 rehearses on a restored production copy.
+- Local `bookbridge` is **unmigrated** (0 relations) — there is no local prod-shaped data. §5.4 later
+  established that production itself already carries the migrated rows, so the local gap matters for
+  browser verification rather than for migration safety.
 - `bookbridge_test`, `bookbridge_p1_final` and `bookbridge_phase1_check` all carry V1–V10 with matching
   checksums.
 - API :8080 and web :3000 are stopped; Docker is unavailable, so `make db` + `make api` + `make web`
   is the only local path.
-- Production is at **V9**; V10 has never run there, and `main` is ahead of `origin/main`.
+- ~~Production is at V9~~ — **wrong, corrected in §5.4: production applied V10 on 2026-11-06.**
+
+### 5.4 Production reality (measured 2026-11-06, read-only queries)
+
+**Production is at V11-pending / V10-applied, not V9.** The plan and §5.3 both assumed V10 had never
+run there. It has: `flyway_schema_history` rank 10, `success=t`, checksum `-2140867330` (exactly the
+committed file), `installed_on = 2026-11-06 14:42:48` — four minutes after the Phase 1 commits reached
+`origin/main`, so the deployed backend migrates at boot and a deploy happened.
+
+| Check | Result |
+|---|---|
+| V10 backfill: listings with `category_id IS NULL` | **0** — the TEXTBOOKS backfill covered every legacy row |
+| `collection_items` rows | **4** — the `listings.collection_id` backfill carried the old memberships across |
+| `users` / `listings` / `books` / `conversations` / `messages` | 10 / 11 / 13 / 4 / 8 — all preserved |
+| Listing statuses | AVAILABLE 8, EXCHANGED 1, WITHDRAWN 1, UNAVAILABLE 1 |
+| Legacy `listings.medium` | **NULL for all 11** — intentional (`ck_listings_medium` permits NULL); `resolveShape` normalises it to PHYSICAL on both create and update, so no null-enum crash path exists |
+| Digital listings (`medium <> 'PHYSICAL'`) | **0**, and `media_assets` = 0 |
+| Damage from the §5.1 create defect | **None.** No digital listing has ever been created, so the defect had no rows to corrupt |
+| `resource_requests` / `saved_*` / `resource_alerts` / `notifications` / `exchanges` / `resource_reports` | all **0** |
+| `users WHERE role='ADMIN'` | **0** — moderation is confirmed unreachable, not merely untested |
+| `listing_status_history` | **0** despite 3 non-AVAILABLE listings — transitions predate the audit trail, so history starts today rather than covering existing data |
+
+Consequences for the plan: M1's prodlike rehearsal of V10 is **moot** — the risky migration already
+succeeded against real data. What replaces it is (a) getting the §5.1 fix deployed, since production is
+running the defective create path right now, and (b) treating D1 as pre-launch work: the anonymous
+request feed has no data behind it yet, so requiring sign-in costs nothing today and would be a
+privacy incident once students start posting.
+
+### 5.5 M1 deliverables
+
+`V11__phase1_supporting_indexes.sql` — purely additive, every statement `IF NOT EXISTS`, verified
+applied on a V10 database (rank 11, `success=t`) with the suite at 34/34:
+
+- `idx_notifications_user_type_entity (user_id, type, entity_id)` — the fan-out dedupe check runs once
+  per candidate match.
+- `idx_saved_resources_user_created` and `idx_saved_collections_user_created (user_id, created_at DESC)` —
+  the composite primary key orders by resource id, so both saved lists were sorting unindexed.
+
+Deliberately **not** added: an index on `resource_alerts.enabled`. The alert fan-out must inspect every
+enabled alert — there is no selective SQL predicate to exploit, the column is low-cardinality, and a
+partial index would only pay off if most alerts were disabled. D6 is a query fix
+(`findByEnabledTrue` + `@EntityGraph`), not a schema one.
+
+`resourceswaphub-database/scripts/bootstrap_admin.sql` — human-run, idempotent, aborts rather than
+silently no-op'ing if the address matches zero or several accounts. Verified both branches against the
+local test database (guard raised `Set target_email to a real registered account first.`; a real
+account was promoted to ADMIN and the row count confirmed, then reverted). It is not an endpoint
+because an API that grants ADMIN is a self-escalation surface, and not a migration because a migration
+cannot know who the operator is.
