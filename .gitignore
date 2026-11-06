@@ -10,5 +10,9 @@
 .env.*
 !.env.example
 
-# Local PostgreSQL binaries and data (database/scripts/local-postgres.sh)
+# Local PostgreSQL binaries and data (resourceswaphub-database/scripts/local-postgres.sh)
 resourceswaphub-database/.local/
+
+# Logical snapshots of production data taken for backup verification.
+# These contain real user rows and token hashes and must never be committed.
+.prod-snapshot*/
