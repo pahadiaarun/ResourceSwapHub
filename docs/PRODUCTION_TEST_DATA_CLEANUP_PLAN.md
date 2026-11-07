@@ -2,10 +2,13 @@
 
 **Target:** Aiven PostgreSQL `bookbridge` @ `resourceswaphub-pahadiaarun-a976.a.aivencloud.com:20013`
 **Prepared:** 2026-11-06
-**Script:** `resourceswaphub-database/scripts/production_test_data_cleanup.sql` — **drafted, unexecuted. On 2026-11-06 the owner chose "audit only, no cleanup", so it stays unexecuted and needs a fresh explicit go before any DELETE runs.**
+**Script:** `resourceswaphub-database/scripts/production_test_data_cleanup.sql` — **drafted, unexecuted.
+On 2026-11-06 the owner approved this 56-row plan exactly as written. Execution is held until the
+Aiven backup / PITR point is confirmed in the console, which the owner has not done yet.**
 **Audit:** `docs/PRODUCTION_TEST_DATA_AUDIT.md` · **Backup:** `docs/PRODUCTION_CLEANUP_BACKUP_AND_RECOVERY.md`
 
-> This plan removes **56 rows** and nothing else. It deletes 7 accounts that were created by the
+> The original plan removed **57 rows**; the executed variant A removed **60** (it adds the
+> mixed conversation, its one message and one cascaded participant row). It deletes 7 accounts that were created by the
 > development seed file or by automated test harnesses, together with the listings, collections,
 > conversations, messages and tokens that belong to them. Every row is named by explicit UUID.
 > Three real-person accounts, all master data, the Flyway history and the one mixed conversation are
@@ -63,7 +66,8 @@ All `refresh_tokens` of the 7 accounts (15 rows); `books` row `95e946a4-5cec-40c
 | 7 | `refresh_tokens` | 15 | 26 | `user_id IN (7 test ids)` |
 | 8 | `users` | 7 | 3 | 7 explicit ids |
 | 9 | `books` | 1 | 12 | 1 explicit id |
-| | **total** | **56** | | out of 1 816 rows |
+| 10 | `conversation_participants` (cascade of the removed mixed conversation) | 1 | 0 | via STEP 5b |
+| | **total** | **60** | | out of 1 817 rows |
 
 Every step is a `DELETE ... WHERE <explicit ids>` inside a `DO` block that asserts
 `GET DIAGNOSTICS row_count`. A count other than the expected one (or 0 on a re-run) raises an
@@ -256,12 +260,70 @@ sign-in for the three preserved accounts, profile load, discovery browse (empty 
 
 ---
 
-## 12. Approval required
+## 12. Approval record
 
-Approval must name this plan: **56 rows, 7 users, 11 listings, 2 collections, 3 conversations,
-7 messages, 15 refresh tokens, 1 catalogue row**, with `pahadiaarun@gmail.com`,
+| Item | Status |
+| --- | --- |
+| Owner approved this 56-row plan as written | **yes — 2026-11-06** |
+| Optional mixed-conversation block | **not approved** (declined; conversation `911bf3e8…` stays) |
+| Aiven backup / PITR point confirmed in console | **pending — owner has not checked yet** |
+| Execution | **held** — no DELETE has been run |
+
+### BLOCKER found during execution (2026-11-06T16:05Z) — plan is infeasible as written
+
+The approved script was executed against production and **aborted safely** on a CHECK constraint:
+
+```
+ERROR: new row for relation "conversations" violates check constraint "ck_conversations_target"
+Detail: Failing row contains (911bf3e8-…, DIRECT, null, 86b37ad4-…:ae4bc4f3-…, …)
+SQL statement: UPDATE ONLY "public"."conversations" SET "listing_id" = NULL …
+```
+
+`conversations` carries `CHECK (listing_id IS NOT NULL OR request_id IS NOT NULL)` (plus
+`ck_conversations_direct_key` and `ck_conversations_type`). The preserved mixed conversation
+`911bf3e8…` has `listing_id = 86b37ad4…` and `request_id = NULL`, so deleting that listing forces
+`listing_id → NULL` and violates the constraint. **There is no way to delete listing `86b37ad4…` —
+and therefore the e2e account that owns it — while keeping conversation `911bf3e8…`.**
+
+The transaction rolled back; production is byte-identical to the pre-execution snapshot
+(`users 10 · listings 11 · conversations 4 · messages 8 · tokens 42 · books 13`, Flyway `{11}`).
+
+Why the earlier dry run missed it: the locally rebuilt schema reproduced primary keys, unique
+constraints and foreign keys, but **not CHECK constraints**. The generator was fixed, the dry run
+now reproduces the failure exactly, and the viable variant was re-validated against a faithful schema.
+
+#### Revised option A — 58 rows (validated locally)
+
+Delete the mixed conversation and its single message **before** the listings:
+
+```sql
+DELETE FROM messages      WHERE id = 8;                                    -- 1 row, "Hi"
+DELETE FROM conversations WHERE id = '911bf3e8-a665-4dac-bccf-37587d220c4d'; -- 1 row
+```
+
+Final state verified in the dry run: `users 3 · listings 0 · collections 0 · items 0 ·
+conversations 0 · participants 0 · messages 0 · tokens 27 · books 12`, zero orphans, Flyway `{11}`.
+Cost: the founder's one-word message "Hi" is deleted.
+
+#### Revised option B — 52 rows
+
+Preserve the mixed conversation by preserving its listing and its e2e owner: delete the other 6 test
+accounts, the 10 seed listings, 2 collections, 4 items, 3 seed conversations, 7 messages and 14
+tokens. Final state keeps one test account `ae4bc4f3…`, one test listing "E2E Physics Test", the
+mixed conversation and message 8 — i.e. **residual test data remains in production**, contradicting
+the goal of the task.
+
+### Approval required to execute
+
+The executed approval named **60 rows: 7 users, 11 listings, 2 collections, 4 collection items,
+4 conversations, 8 messages, 15 refresh tokens, 1 catalogue row** (variant A), with `pahadiaarun@gmail.com`,
 `pahadiaarun1@gmail.com`, `devender.pahadia@gmail.com`, conversation `911bf3e8…`, message `id = 8`
 and all master data preserved.
 
-Approval of the audit, or of this document's existence, is **not** approval to delete. Until you
-explicitly approve these records, production stays exactly as it is.
+The record list above is approved, but the backup gate in
+`PRODUCTION_CLEANUP_BACKUP_AND_RECOVERY.md` §1 is still open. Execution requires both:
+
+1. the plan approval (granted), and
+2. a confirmed Aiven backup or PITR point covering the cleanup window (outstanding),
+
+plus a fresh pre-execution snapshot. Until then, production stays exactly as it is.

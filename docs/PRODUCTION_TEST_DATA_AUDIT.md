@@ -287,7 +287,12 @@ user rows, so that no delete depends on an invisible cascade to reach the right 
 
 ---
 
-## 9. Expected deletion impact (confirmed set only)
+## 9. Expected deletion impact (confirmed set only — 57 rows)
+
+> Correction (2026-11-06): an earlier revision of this document stated 56 rows; the table below
+> sums to **57**. The executed cleanup was variant **A (60 rows)**, which additionally removed the
+> mixed conversation, its message and one cascaded participant row — see
+> `PRODUCTION_TEST_DATA_CLEANUP_REPORT.md`.
 
 | Table | Rows to delete | Remaining | Notes |
 | --- | ---: | ---: | --- |
@@ -300,7 +305,7 @@ user rows, so that no delete depends on an invisible cascade to reach the right 
 | refresh_tokens | 15 | 26 | founder 12 + 13 + 1 preserved |
 | users | 7 | 3 | 3 real-person accounts preserved |
 | books | 1 | 12 | only `E2E Physics Test` |
-| **total** | **56** | | out of 1 816 rows |
+| **total** | **57** | | out of 1 816 rows |
 
 Side effect to be aware of: after the listing `86b37ad4…` is deleted, the preserved mixed
 conversation `911bf3e8…` becomes a thread with `listing_id = NULL` and a single participant (U9) with

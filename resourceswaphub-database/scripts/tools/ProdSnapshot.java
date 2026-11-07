@@ -107,7 +107,7 @@ public class ProdSnapshot {
                  ResultSet rs = st.executeQuery("""
                      SELECT k.conrelid::regclass::text AS child, pg_get_constraintdef(k.oid) AS def
                      FROM pg_constraint k JOIN pg_namespace n ON n.oid = k.connamespace
-                     WHERE k.contype IN ('f','p','u') AND n.nspname='public'""")) {
+                     WHERE k.contype IN ('f','p','u','c') AND n.nspname='public'""")) {
                 while (rs.next()) {
                     fks.computeIfAbsent(rs.getString("child"), k -> new ArrayList<>()).add(rs.getString("def"));
                 }

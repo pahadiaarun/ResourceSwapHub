@@ -1,0 +1,84 @@
+name: Keep-alive
+
+# Render spins a Free web service down after 15 minutes without inbound
+# traffic, and waking it takes about a minute. An external ping every 10
+# minutes keeps a 5-minute lead against that timer.
+#
+# Setup (once): Settings -> Secrets and variables -> Actions -> Variables ->
+# New repository variable named RENDER_HEALTH_URL, e.g.
+#   https://resourceswaphub-api.onrender.com/actuator/health
+# See docs/KEEP_ALIVE.md for the full rationale and the alternatives.
+
+on:
+  schedule:
+    # Every 10 minutes. GitHub may delay scheduled runs under load, which is
+    # why the interval is not closer to Render's 15-minute spin-down window.
+    - cron: "*/10 * * * *"
+  workflow_dispatch:
+
+concurrency:
+  group: keep-alive
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  ping:
+    name: Ping the Render health endpoint
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - name: Require RENDER_HEALTH_URL
+        env:
+          HEALTH_URL: ${{ vars.RENDER_HEALTH_URL }}
+        run: |
+          if [ -z "${HEALTH_URL}" ]; then
+            echo "::error::RENDER_HEALTH_URL is not set. Add it under Settings -> Secrets and variables -> Actions -> Variables, for example https://<service>.onrender.com/actuator/health"
+            exit 1
+          fi
+          echo "Pinging ${HEALTH_URL}"
+
+      - name: Ping health endpoint
+        env:
+          HEALTH_URL: ${{ vars.RENDER_HEALTH_URL }}
+        run: |
+          set -uo pipefail
+
+          attempt=1
+          max_attempts=3
+
+          while [ "${attempt}" -le "${max_attempts}" ]; do
+            started=$(date +%s)
+            code=$(curl -sS -o /tmp/health.body -w '%{http_code}' --max-time 120 "${HEALTH_URL}" 2>/tmp/curl.err) || code="000"
+            elapsed=$(( $(date +%s) - started ))
+
+            echo "attempt ${attempt}/${max_attempts}: HTTP ${code} in ${elapsed}s"
+
+            if [ "${code}" = "200" ] && grep -qE '"status"[[:space:]]*:[[:space:]]*"UP"' /tmp/health.body; then
+              echo "Health is UP after ${elapsed}s"
+              cat /tmp/health.body
+              echo
+              if [ "${elapsed}" -ge 10 ]; then
+                echo "::notice::Cold start detected (${elapsed}s) - the service had spun down before this ping."
+              fi
+              exit 0
+            fi
+
+            if [ "${code}" != "200" ]; then
+              echo "response body (if any):"
+              head -c 300 /tmp/health.body || true
+              echo
+              echo "curl stderr:"
+              head -c 300 /tmp/curl.err || true
+              echo
+            fi
+
+            attempt=$(( attempt + 1 ))
+            if [ "${attempt}" -le "${max_attempts}" ]; then
+              sleep 20
+            fi
+          done
+
+          echo "::error::Health check failed after ${max_attempts} attempts. Render may be suspended (free instance hours exhausted), the service may be failing to boot, or RENDER_HEALTH_URL may be wrong."
+          exit 1

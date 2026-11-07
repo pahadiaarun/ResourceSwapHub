@@ -1,8 +1,5 @@
 package com.bookbridge.request;
 
-import java.time.Instant;
-import java.util.Optional;
-import java.util.concurrent.atomic.AtomicReference;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
@@ -26,21 +23,5 @@ public class RequestExpiryScheduler {
     @Transactional
     public void expireOverdue() {
         requestService.expireDue();
-    }
-
-    /**
-     * Lightweight liveness pings run every 10 seconds. They do not perform any
-     * application work — they only tick the {@link #lastPing} heartbeat so outside
-     * monitors can distinguish a hung JVM from a quiet one.
-     */
-    @Scheduled(fixedDelay = 10_000, initialDelay = 10_000)
-    public void livenessPing() {
-        lastPing.set(Instant.now());
-    }
-
-    private final AtomicReference<Instant> lastPing = new AtomicReference<>();
-
-    public Optional<Instant> lastPing() {
-        return Optional.ofNullable(lastPing.get());
     }
 }

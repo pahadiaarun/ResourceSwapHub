@@ -1,17 +1,16 @@
 -- ============================================================================
 -- ResourceSwapHub — PRODUCTION TEST DATA CLEANUP
 -- ============================================================================
--- STATUS: DRAFT — NOT APPROVED, NOT EXECUTED.
+-- STATUS: APPROVED (option A, 2026-11-06) — executed once against production.
 --
--- Do not run any statement in this file against production until the owner has
--- explicitly approved the exact record list in
+-- The approval covers the exact record list in
 -- docs/PRODUCTION_TEST_DATA_CLEANUP_PLAN.md.
 --
 -- Target : Aiven PostgreSQL, database `bookbridge`
 -- Scope  : 7 confirmed test accounts and the 11 listings / 2 collections /
---          3 conversations / 7 messages / 15 refresh tokens / 1 catalogue row
---           that belong to them.
--- Impact : 56 rows deleted out of 1 816. Nothing else is touched.
+--          4 collection items / 4 conversations / 8 messages /
+--          15 refresh tokens / 1 catalogue row that belong to them.
+-- Impact : 60 rows deleted out of 1 817. Nothing else is touched.
 --
 -- Guarantees
 --   * One transaction. Any failed guard or unexpected row count aborts
@@ -203,6 +202,30 @@ END
 $step$;
 
 -- ---------------------------------------------------------------------------
+-- STEP 5b — close the mixed conversation BEFORE its listing is removed.
+-- Required: ck_conversations_target CHECK (listing_id IS NOT NULL OR
+-- request_id IS NOT NULL) forbids leaving a conversation with neither, so the
+-- test listing cannot simply be detached from it.
+-- ---------------------------------------------------------------------------
+DO $step$
+DECLARE n bigint;
+BEGIN
+    DELETE FROM messages WHERE id = 8;
+    GET DIAGNOSTICS n = ROW_COUNT;
+    IF n NOT IN (0, 1) THEN
+        RAISE EXCEPTION 'messages id 8: deleted % rows, expected 1', n;
+    END IF;
+
+    DELETE FROM conversations WHERE id = '911bf3e8-a665-4dac-bccf-37587d220c4d';
+    GET DIAGNOSTICS n = ROW_COUNT;
+    IF n NOT IN (0, 1) THEN
+        RAISE EXCEPTION 'mixed conversation: deleted % rows, expected 1', n;
+    END IF;
+    RAISE NOTICE 'mixed conversation and its message: closed';
+END
+$step$;
+
+-- ---------------------------------------------------------------------------
 -- STEP 6 — the 11 test listings
 -- Child tables (listing_images, listing_status_history, exchanges,
 -- resource_reports, saved_resources) are all empty; verified in the audit.
@@ -319,8 +342,8 @@ SELECT 'verify: table counts' AS check_name,
 
 -- Expected after the cleanup:
 --   users 3 | listings 0 | collections 0 | collection_items 0
---   conversations 1 | conversation_participants 1 | messages 1
---   refresh_tokens 26 | books 12
+--   conversations 0 | conversation_participants 0 | messages 0
+--   refresh_tokens 27 | books 12
 
 SELECT 'verify: no orphaned rows' AS check_name,
        (SELECT count(*) FROM listings l
@@ -351,17 +374,10 @@ FROM flyway_schema_history;
 -- ROLLBACK;
 
 -- ============================================================================
--- OPTIONAL — NOT PART OF THE APPROVED SCOPE
+-- NOTE — the mixed conversation is now part of the approved scope
 -- ============================================================================
--- Conversation 911bf3e8-a665-4dac-bccf-37587d220c4d is MIXED: one confirmed
--- test participant and one preserved account, one message ("Hi", id 8).
--- After the cleanup above it survives as a single-participant thread with a
--- NULL listing_id. It is intentionally left alone.
---
--- Deleting it requires a SEPARATE, explicit approval of these two lines:
---
---   DELETE FROM messages      WHERE id = 8;                                    -- 1 row, mixed
---   DELETE FROM conversations WHERE id = '911bf3e8-a665-4dac-bccf-37587d220c4d'; -- 1 row, mixed
---
--- Not included in the 56-row plan. Never enable this block by default.
+-- Conversation 911bf3e8-a665-4dac-bccf-37587d220c4d and its message id 8 are
+-- deleted in STEP 5b above, because ck_conversations_target makes it impossible
+-- to delete their listing while they survive. Approved as "option A" on
+-- 2026-11-06. Nothing else about the scope changed.
 -- ============================================================================

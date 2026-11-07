@@ -172,6 +172,11 @@ complete the manual steps below.
    set (host-only cookies), which keeps auth scoped to the app's own origin.
 7. **Email/password-reset URLs** — not applicable in this version: password
    reset and email verification flows are not implemented yet.
+8. **Cold starts on free hosting** — a free Render web service spins down after
+   15 minutes without inbound traffic and takes about a minute to wake. The
+   scheduled `.github/workflows/keep-alive.yml` pings `/actuator/health` every
+   10 minutes to prevent that; set the `RENDER_HEALTH_URL` repository variable to
+   enable it. See [`docs/KEEP_ALIVE.md`](docs/KEEP_ALIVE.md).
 
 ## Database
 

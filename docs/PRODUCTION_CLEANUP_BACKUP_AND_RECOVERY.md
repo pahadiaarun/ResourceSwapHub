@@ -98,6 +98,20 @@ Production was never the target.
 
 **Result: `RESTORE VERIFIED: every table row count matches the snapshot.` — 42/42 tables.**
 
+### Re-snapshot before execution (done 2026-11-06T15:57:08Z)
+
+A second snapshot was taken after the cleanup plan was approved and no production row had changed
+(the per-table SHA-256 digests for `messages` and `conversation_participants` are identical to the
+15:08:35Z capture). It was restored and verified again: **42/42 tables, 1 816 rows**.
+
+| Snapshot | Taken (UTC) | Rows | Restore verified | Location |
+| --- | --- | ---: | --- | --- |
+| 1 (audit) | 2026-11-06T15:08:35Z | 1 816 | 42/42 | `.prod-snapshot-1508/` |
+| 2 (pre-execution) | 2026-11-06T15:57:08Z | 1 816 | 42/42 | `.prod-snapshot/` |
+
+A **third** snapshot must be taken immediately before the approved cleanup runs, because production
+is live and accepts new rows at any time.
+
 ---
 
 ## 3. Recovery procedure
