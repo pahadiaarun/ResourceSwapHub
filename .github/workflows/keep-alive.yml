@@ -41,7 +41,7 @@ jobs:
 
       - name: Ping health endpoint
         env:
-          HEALTH_URL: ${{ vars.RENDER_HEALTH_URL }}
+          HEALTH_URL: "https://resourceswaphub.onrender.com/actuator/health'
         run: |
           set -uo pipefail
 
