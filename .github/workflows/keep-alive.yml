@@ -31,7 +31,7 @@ jobs:
     steps:
       - name: Require RENDER_HEALTH_URL
         env:
-          HEALTH_URL: ${{ vars.RENDER_HEALTH_URL }}
+          HEALTH_URL: "https://resourceswaphub.onrender.com/actuator/health"
         run: |
           if [ -z "${HEALTH_URL}" ]; then
             echo "::error::RENDER_HEALTH_URL is not set. Add it under Settings -> Secrets and variables -> Actions -> Variables, for example https://<service>.onrender.com/actuator/health"
